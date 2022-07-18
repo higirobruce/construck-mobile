@@ -73,7 +73,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Object? _mySelection;
 
-  String loadingText = 'Loading data...';
+  String loadingText = 'No data found!';
 
   void _setDurationCheck() {
     print(_duration!.text);
@@ -94,6 +94,9 @@ class _MainScreenState extends State<MainScreen> {
     // TODO: implement initState
     super.initState();
     _duration!.addListener(_setDurationCheck);
+    setState(() {
+      loadingText = 'Loading data...';
+    });
 
     ReasonApi.getReasonSuggestion('').then((value) => setState(() {
           reasons = value;
@@ -104,6 +107,9 @@ class _MainScreenState extends State<MainScreen> {
         }));
     WorkDatasApi.getWorkData(widget.userId).then((value) => setState(() {
           forms = value;
+          if (forms!.isEmpty) {
+            loadingText = 'No data found!';
+          }
         }));
 
     setState(() {
@@ -120,6 +126,7 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> refresh() {
     setState(() {
       forms = List.empty();
+      loadingText = 'Loading data...';
     });
     return WorkDatasApi.getWorkData(widget.userId).then((value) => setState(() {
           forms = value;
@@ -315,7 +322,18 @@ class _MainScreenState extends State<MainScreen> {
             //   },
             // ),
             child: forms!.length == 0
-                ? Center(child: Text(loadingText))
+                ? Center(
+                    child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(loadingText),
+                      IconButton(
+                        icon: Icon(Icons.refresh),
+                        color: Colors.orange,
+                        onPressed: refresh,
+                      )
+                    ],
+                  ))
                 : buildJobs(forms),
           ),
         ],
