@@ -58,7 +58,7 @@ class _LoginState extends State<Login> {
                 ' ' +
                 value['employee']['lastName'],
             await storage.write(key: '_id', value: _id),
-            await storage.write(key: 'userName', value: username),
+            await storage.write(key: 'userName', value: userName),
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
