@@ -1,5 +1,6 @@
 // ignore_for_file: unnecessary_const
 
+import 'package:flutter/services.dart';
 import 'package:mobile2/api/equipments_api.dart';
 import 'package:mobile2/api/projects_api.dart';
 import 'package:mobile2/api/reasons_api.dart';
@@ -16,9 +17,11 @@ import 'package:date_range_form_field/date_range_form_field.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MainScreen extends StatefulWidget {
+  final String? _id;
   final String? userId;
   final String? name;
-  const MainScreen(this.userId, this.name, {Key? key}) : super(key: key);
+  const MainScreen(this._id, this.name, this.userId, {Key? key})
+      : super(key: key);
   @override
   _MainScreenState createState() => _MainScreenState();
 }
@@ -105,7 +108,7 @@ class _MainScreenState extends State<MainScreen> {
           }
           _mySelection = value[0].descriptionRw;
         }));
-    WorkDatasApi.getWorkData(widget.userId).then((value) => setState(() {
+    WorkDatasApi.getWorkData(widget._id).then((value) => setState(() {
           forms = value;
           if (forms!.isEmpty) {
             loadingText = 'No data found!';
@@ -128,7 +131,7 @@ class _MainScreenState extends State<MainScreen> {
       forms = List.empty();
       loadingText = 'Loading data...';
     });
-    return WorkDatasApi.getWorkData(widget.userId).then((value) => setState(() {
+    return WorkDatasApi.getWorkData(widget._id).then((value) => setState(() {
           forms = value;
           if (value.isEmpty) {
             loadingText = 'No data found!';
@@ -327,11 +330,13 @@ class _MainScreenState extends State<MainScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(loadingText),
-                      IconButton(
-                        icon: Icon(Icons.refresh),
-                        color: Colors.orange,
-                        onPressed: refresh,
-                      )
+                      loadingText == 'No data found!'
+                          ? IconButton(
+                              icon: Icon(Icons.refresh),
+                              color: Colors.orange,
+                              onPressed: refresh,
+                            )
+                          : Text('')
                     ],
                   ))
                 : buildJobs(forms),
@@ -359,64 +364,70 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: Colors.black87,
     );
 
-    return Scaffold(
-      // appBar: AppBar(title: Text('Shabika App')),
-      // backgroundColor: Colors.amber[100],
-      body: RefreshIndicator(
-          onRefresh: refresh, child: SafeArea(child: screens[currentIndex])),
-      bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.shifting,
-          onTap: (index) => setState(() {
-                currentIndex = index;
-                _projectController.text = '';
-                _equipmentController.text = '';
-                _lowbedController.text = '';
-                _driverController.text = '';
-                _lowbedDriverController.text = '';
-                _workDoneController.text = '';
-                _reasonController.text = '';
-                _startIndex.text = '';
-                _endIndex.text = '';
-                _duration!.text = '';
-                _tripsDone.text = '';
-                project =
-                    const Project(prjDescription: '', prjId: '', customer: '');
-                machineToMove = const Equipment(
-                    equipmentId: '',
-                    plateNumber: '',
-                    eqDescription: '',
-                    eqType: "");
+    return RefreshIndicator(
+      displacement: 100,
+      triggerMode: RefreshIndicatorTriggerMode.onEdge,
+      onRefresh: refresh,
+      child: Scaffold(
+        // appBar: AppBar(title: Text('Shabika App')),
+        // backgroundColor: Colors.amber[100],
+        body: SafeArea(
+          child: screens[currentIndex],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.shifting,
+            onTap: (index) => setState(() {
+                  currentIndex = index;
+                  _projectController.text = '';
+                  _equipmentController.text = '';
+                  _lowbedController.text = '';
+                  _driverController.text = '';
+                  _lowbedDriverController.text = '';
+                  _workDoneController.text = '';
+                  _reasonController.text = '';
+                  _startIndex.text = '';
+                  _endIndex.text = '';
+                  _duration!.text = '';
+                  _tripsDone.text = '';
+                  project = const Project(
+                      prjDescription: '', prjId: '', customer: '');
+                  machineToMove = const Equipment(
+                      equipmentId: '',
+                      plateNumber: '',
+                      eqDescription: '',
+                      eqType: "");
 
-                lowbed = const Equipment(
-                    equipmentId: '',
-                    plateNumber: '',
-                    eqDescription: '',
-                    eqType: '');
-                workDone = const WorkDone(jobDescription: '', jobId: '');
-                driver = const User(firstName: '', lastName: '', userId: '');
-                lowbedDriver =
-                    const User(firstName: '', lastName: '', userId: '');
-                reason = const Reason(
-                    description: '', reasonId: '', descriptionRw: '');
+                  lowbed = const Equipment(
+                      equipmentId: '',
+                      plateNumber: '',
+                      eqDescription: '',
+                      eqType: '');
+                  workDone = const WorkDone(jobDescription: '', jobId: '');
+                  driver = const User(firstName: '', lastName: '', userId: '');
+                  lowbedDriver =
+                      const User(firstName: '', lastName: '', userId: '');
+                  reason = const Reason(
+                      description: '', reasonId: '', descriptionRw: '');
 
-                submitting = false;
-                dayShift = true;
-                machineDispatch = false;
-                siteWork = false;
+                  submitting = false;
+                  dayShift = true;
+                  machineDispatch = false;
+                  siteWork = false;
 
-                movementDateRange =
-                    DateTimeRange(start: DateTime.now(), end: DateTime.now());
+                  movementDateRange =
+                      DateTimeRange(start: DateTime.now(), end: DateTime.now());
 
-                workDateRange =
-                    DateTimeRange(start: DateTime.now(), end: DateTime.now());
-              }),
-          currentIndex: currentIndex,
-          // ignore: prefer_const_literals_to_create_immutables
-          items: [
-            // bottomNavigationBarItem,
-            bottomNavigationBarItem2,
-            bottomNavigationBarItem3,
-          ]),
+                  workDateRange =
+                      DateTimeRange(start: DateTime.now(), end: DateTime.now());
+                }),
+            currentIndex: currentIndex,
+            // ignore: prefer_const_literals_to_create_immutables
+            items: [
+              // bottomNavigationBarItem,
+              bottomNavigationBarItem2,
+              bottomNavigationBarItem3,
+            ]),
+      ),
     );
   }
 
@@ -726,11 +737,11 @@ class _MainScreenState extends State<MainScreen> {
                   subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(job.dispatchDate +
-                            ' ' +
-                            job.shift +
-                            ' ' +
-                            job.prj.prjDescription),
+                        Text(job.dispatchDate + ' ' + job.shift,
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          job.prj.prjDescription,
+                        ),
                         SizedBox(
                           height: 5,
                         ),
@@ -798,16 +809,23 @@ class _MainScreenState extends State<MainScreen> {
                                                       if (value == null ||
                                                           value.isEmpty) {
                                                         return 'Andika Kilometraje zisoza';
-                                                      } else if (int.parse(
-                                                              value) <
-                                                          job.startIndex) {
-                                                        return 'Izisoza ni nto kuzo watangiranye akazi!';
                                                       }
+                                                      // else if (int.parse(
+                                                      //         value) <
+                                                      //     job.startIndex) {
+                                                      //   return 'Izisoza ni nto kuzo watangiranye akazi!';
+                                                      // }
                                                       return null;
                                                     },
                                                   ),
                                                   TextFormField(
                                                     controller: _duration,
+                                                    inputFormatters: [
+                                                      //only numeric keyboard.
+                                                      LengthLimitingTextInputFormatter(
+                                                          1), //only 6 digit
+                                                      // WhitelistingTextInputFormatter.digitsOnly
+                                                    ],
                                                     onChanged: (value) {
                                                       if (value.isNotEmpty &&
                                                           int.parse(value) <
@@ -977,9 +995,20 @@ class _MainScreenState extends State<MainScreen> {
                                                                     tripsAreLess
                                                                 ? _mySelection
                                                                     .toString()
-                                                                : '')
+                                                                : '',
+                                                            widget.userId!,
+                                                            job.dispatchDate)
                                                         .then(
-                                                      (value) => refresh(),
+                                                      (value) => {
+                                                        refresh(),
+                                                        this.setState(() {
+                                                          _endIndex.text = '';
+                                                          _startIndex.text = '';
+                                                          _duration!.text = '';
+                                                          _tripsDone.text = '';
+                                                          _hours.text = '';
+                                                        })
+                                                      },
                                                     ),
                                                   },
                                               },
@@ -1026,11 +1055,12 @@ class _MainScreenState extends State<MainScreen> {
                                                       if (value == null ||
                                                           value.isEmpty) {
                                                         return 'Andika kilometraje utangiranye';
-                                                      } else if (int.parse(
-                                                              value) <
-                                                          job.millage) {
-                                                        return "Ni nke kuz'iheruka";
                                                       }
+                                                      // else if (int.parse(
+                                                      //         value) <
+                                                      //     job.millage) {
+                                                      //   return "Ni nke kuz'iheruka";
+                                                      // }
                                                       return null;
                                                     },
                                                   )
@@ -1055,12 +1085,20 @@ class _MainScreenState extends State<MainScreen> {
                                                       Navigator.pop(context),
                                                       WorkDatasApi.startJob(
                                                               job.jobId,
-                                                              _startIndex.text)
+                                                              _startIndex.text,
+                                                              widget.userId!,
+                                                              job.dispatchDate)
                                                           .then(
                                                         (value) =>
                                                             this.setState(
                                                           () => {
                                                             _duration!.text =
+                                                                '',
+                                                            _tripsDone.text =
+                                                                '',
+                                                            _endIndex.text = '',
+                                                            _hours.text = '',
+                                                            _startIndex.text =
                                                                 '',
                                                             refresh()
                                                           },
@@ -1098,7 +1136,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           );
         },
-        physics: BouncingScrollPhysics(),
+        physics: AlwaysScrollableScrollPhysics(),
         itemCount: jobs!.length,
       );
 }

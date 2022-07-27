@@ -9,10 +9,9 @@ import 'package:intl/date_symbol_data_local.dart';
 
 class WorkDatasApi {
   static Future<List<WorkData>> getWorkData(userId) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/works');
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/v3/driver/' +
-            userId);
+        'https://construck-backend.herokuapp.com/works/v3/driver/' + userId);
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -48,10 +47,10 @@ class WorkDatasApi {
       DateTime start,
       DateTime end,
       String sitework) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/works');
 
-    final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/mobileData');
+    final url =
+        Uri.parse('https://construck-backend.herokuapp.com/works/mobileData');
     final response = await http.post(url, body: {
       "project": jsonEncode(project),
       "equipment": jsonEncode(equipment),
@@ -75,12 +74,16 @@ class WorkDatasApi {
     }
   }
 
-  static Future<bool> startJob(String jobId, String startIndex) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
+  static Future<bool> startJob(String jobId, String startIndex,
+      String startedBy, String postingDate) async {
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/works/start/' + jobId);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/start/' +
-            jobId);
-    final response = await http.put(url, body: {"startIndex": startIndex});
+        'https://construck-backend.herokuapp.com/works/start/' + jobId);
+    final response = await http.put(url, body: {
+      "startIndex": startIndex,
+      "startedBy": startedBy,
+      "postingDate": postingDate
+    });
 
     if (response.statusCode == 201) {
       return true;
@@ -89,19 +92,27 @@ class WorkDatasApi {
     }
   }
 
-  static Future<bool> endJob(String jobId, String endIndex, String duration,
-      String tripsDone, String comment) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/stop/' + jobId);
+  static Future<bool> endJob(
+      String jobId,
+      String endIndex,
+      String duration,
+      String tripsDone,
+      String comment,
+      String stoppedBy,
+      String postingDate) async {
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/works/stop/' + jobId);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/stop/' +
-            jobId);
+        'https://construck-backend.herokuapp.com/works/stop/' + jobId);
     final response = await http.put(url, body: {
       "endIndex": endIndex,
       "duration": duration == "" ? "5" : duration,
       "tripsDone": tripsDone == "" ? "0" : tripsDone,
       "comment": comment,
+      "stoppedBy": stoppedBy,
+      "postingDate": postingDate
     });
 
+    print(stoppedBy);
     if (response.statusCode == 201) {
       return true;
     } else {

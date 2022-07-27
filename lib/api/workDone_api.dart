@@ -4,9 +4,8 @@ import 'package:http/http.dart' as http;
 
 class WorkDoneApi {
   static Future<List<WorkDone>> getWorkDoneSuggestion(String query) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/jobTypes');
-    final url =
-        Uri.parse('https://construck-backend-playgroud.herokuapp.com/jobTypes');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/jobTypes');
+    final url = Uri.parse('https://construck-backend.herokuapp.com/jobTypes');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

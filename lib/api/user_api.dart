@@ -4,9 +4,8 @@ import 'package:http/http.dart' as http;
 
 class UserApi {
   static Future<List<User>> getUsers(String query) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/employees');
-    final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/employees');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/employees');
+    final url = Uri.parse('https://construck-backend.herokuapp.com/employees');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -19,9 +18,9 @@ class UserApi {
   }
 
   static Future login(String password, String phone) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/employees');
-    final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/employees/login');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/employees');
+    final url =
+        Uri.parse('https://construck-backend.herokuapp.com/employees/login');
     final response =
         await http.post(url, body: {"password": password, "phone": phone});
 

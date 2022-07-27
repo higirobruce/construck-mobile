@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 
 class EquipmentsApi {
   static Future<List<Equipment>> getEquipmentSuggestions(String query) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/equipments');
-    final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/equipments/v2');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/equipments');
+    final url =
+        Uri.parse('https://construck-backend.herokuapp.com/equipments/v2');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -26,9 +26,9 @@ class EquipmentsApi {
   }
 
   static Future<List<Equipment>> getLowbedSuggestions(String query) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/equipments');
-    final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/equipments/v2');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/equipments');
+    final url =
+        Uri.parse('https://construck-backend.herokuapp.com/equipments/v2');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

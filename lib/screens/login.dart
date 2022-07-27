@@ -15,9 +15,16 @@ class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  var snackBar = SnackBar(
+      backgroundColor: Colors.amber,
+      content: Text(
+        "Ntibikunze, telephone n'ijambo ry'ibanga ntibuhura.",
+        style: TextStyle(color: Colors.black),
+      ));
   // Create storage
   final storage = new FlutterSecureStorage();
   String _id = '';
+  String userId = '';
   String userName = '';
   bool submitting = false;
 
@@ -30,16 +37,19 @@ class _LoginState extends State<Login> {
 
   Future<void> _saveCreds() async {
     String? _savedId = await storage.read(key: '_id');
+    String? _savedUserId = await storage.read(key: 'userId');
     String? _savedUsername = await storage.read(key: 'userName');
 
     if (_savedId != null &&
         _savedUsername != null &&
+        _savedUserId != null &&
         _savedId.isNotEmpty &&
         _savedUsername.isNotEmpty) {
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => MainScreen(_savedId, _savedUsername),
+            builder: (context) =>
+                MainScreen(_savedId, _savedUsername, _savedUserId),
           ),
           (Route<dynamic> route) => route is Success);
     }
@@ -54,20 +64,22 @@ class _LoginState extends State<Login> {
         if (value['allowed'] == true)
           {
             _id = value['employee']['_id'],
+            userId = value['employee']['userId'],
             userName = value['employee']['firstName'] +
                 ' ' +
                 value['employee']['lastName'],
             await storage.write(key: '_id', value: _id),
             await storage.write(key: 'userName', value: userName),
+            await storage.write(key: 'userId', value: userId),
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MainScreen(_id, userName),
+                  builder: (context) => MainScreen(_id, userName, userId),
                 ),
                 (Route<dynamic> route) => route is Success)
           }
         else
-          {},
+          {ScaffoldMessenger.of(context).showSnackBar(snackBar)},
         setState(() {
           submitting = false;
         }),
@@ -103,6 +115,7 @@ class _LoginState extends State<Login> {
                           ),
                           TextFormField(
                             controller: usernameController,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Andika izina cyangwa telephone';
@@ -121,6 +134,7 @@ class _LoginState extends State<Login> {
                           TextFormField(
                             controller: passwordController,
                             obscureText: true,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return "Andika ijambo ry'ibanga";

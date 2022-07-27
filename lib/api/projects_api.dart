@@ -5,9 +5,9 @@ import 'package:http/http.dart' as http;
 
 class ProjectsApi {
   static FutureOr<Iterable<Project>> getUserSuggestions(String query) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/projects');
-    final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/projects/v2');
+    // final url = Uri.parse('https://construck-backend.herokuapp.com/projects');
+    final url =
+        Uri.parse('https://construck-backend.herokuapp.com/projects/v2');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
