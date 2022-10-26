@@ -1,10 +1,13 @@
-import 'package:mobile2/screens/mainScreen.dart';
 import 'package:mobile2/screens/login.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile2/theme/them_constants.dart';
+import 'package:mobile2/theme/theme_manager.dart';
 
 void main() {
   runApp(const MyApp());
 }
+
+ThemeManager _themeManager = ThemeManager();
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -15,9 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Construck app',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: lightTheme,
       home: const MyHomePage(title: 'Shabika App'),
     );
   }

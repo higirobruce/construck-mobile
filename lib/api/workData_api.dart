@@ -1,18 +1,21 @@
 import 'dart:convert';
 import 'package:mobile2/api/equipments_api.dart';
 import 'package:mobile2/api/projects_api.dart';
-import 'package:mobile2/api/user_api.dart';
 import 'package:mobile2/api/workDone_api.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';
 
 class WorkDatasApi {
   static Future<List<WorkData>> getWorkData(userId) async {
-    // final url = Uri.parse('https://construck-backend.herokuapp.com/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
+    Codec<String, String> stringToBase64 = utf8.fuse(base64);
+    String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend.herokuapp.com/works/v3/driver/' + userId);
-    final response = await http.get(url);
+        'https://construck-backend-playgroud.herokuapp.com/works/v3/driver/' +
+            userId);
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
     if (response.statusCode == 200) {
       final List works = json.decode(response.body);
@@ -35,6 +38,46 @@ class WorkDatasApi {
     }
   }
 
+  static Future getValidatedSummary(projectName) async {
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
+    Codec<String, String> stringToBase64 = utf8.fuse(base64);
+    String encoded = stringToBase64.encode(credentials);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/monthlyValidatedRevenues/' +
+            projectName);
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List monthlySummary = json.decode(response.body);
+
+      return monthlySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
+  static Future getNonValidatedSummary(projectName) async {
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
+    Codec<String, String> stringToBase64 = utf8.fuse(base64);
+    String encoded = stringToBase64.encode(credentials);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/monthlyNonValidatedRevenues/' +
+            projectName);
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List monthlySummary = json.decode(response.body);
+
+      return monthlySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
   static Future<bool> saveWorkData(
       Project project,
       Equipment equipment,
@@ -47,10 +90,10 @@ class WorkDatasApi {
       DateTime start,
       DateTime end,
       String sitework) async {
-    // final url = Uri.parse('https://construck-backend.herokuapp.com/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
-    final url =
-        Uri.parse('https://construck-backend.herokuapp.com/works/mobileData');
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/mobileData');
     final response = await http.post(url, body: {
       "project": jsonEncode(project),
       "equipment": jsonEncode(equipment),
@@ -76,13 +119,19 @@ class WorkDatasApi {
 
   static Future<bool> startJob(String jobId, String startIndex,
       String startedBy, String postingDate) async {
-    // final url = Uri.parse('https://construck-backend.herokuapp.com/works/start/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
+    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
+    Codec<String, String> stringToBase64 = utf8.fuse(base64);
+    String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend.herokuapp.com/works/start/' + jobId);
+        'https://construck-backend-playgroud.herokuapp.com/works/start/' +
+            jobId);
     final response = await http.put(url, body: {
       "startIndex": startIndex,
       "startedBy": startedBy,
       "postingDate": postingDate
+    }, headers: {
+      "Authorization": 'Basic ' + encoded
     });
 
     if (response.statusCode == 201) {
@@ -100,9 +149,10 @@ class WorkDatasApi {
       String comment,
       String stoppedBy,
       String postingDate) async {
-    // final url = Uri.parse('https://construck-backend.herokuapp.com/works/stop/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/stop/' + jobId);
     final url = Uri.parse(
-        'https://construck-backend.herokuapp.com/works/stop/' + jobId);
+        'https://construck-backend-playgroud.herokuapp.com/works/stop/' +
+            jobId);
     final response = await http.put(url, body: {
       "endIndex": endIndex,
       "duration": duration == "" ? "5" : duration,
@@ -126,8 +176,8 @@ class WorkData {
   final String jobId;
   final String status;
   final String targetTrips;
-  final int startIndex;
-  final int millage;
+  final double startIndex;
+  final double millage;
   final Project prj;
   final String createdOn;
   // final User? driver;
@@ -156,8 +206,8 @@ class WorkData {
       jobId: json['_id'],
       status: json['status'],
       targetTrips: json['targetTrips'],
-      startIndex: json['startIndex'],
-      millage: json['millage'],
+      startIndex: double.parse(json['startIndex']),
+      millage: double.parse(json['millage']),
       prj: Project.fromJson(
         json['project'],
       ),

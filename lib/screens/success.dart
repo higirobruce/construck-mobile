@@ -11,7 +11,7 @@ class _SuccessState extends State<Success> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Success')),
+      appBar: AppBar(title: const Text('Success')),
       body: Center(
         child: Icon(
           Icons.check_circle_outline,
