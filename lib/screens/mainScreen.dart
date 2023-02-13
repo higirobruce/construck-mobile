@@ -1,5 +1,7 @@
 // ignore_for_file: unnecessary_const, prefer_const_constructors, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers
 
+import 'dart:math';
+
 import 'package:intl/intl.dart';
 import 'package:mobile2/api/asset_avblty_analytics_api.dart';
 import 'package:mobile2/api/downtime_analytics_api.dart';
@@ -10,14 +12,19 @@ import 'package:mobile2/api/revenues_analytics_api.dart';
 import 'package:mobile2/api/user_api.dart';
 import 'package:mobile2/api/workData_api.dart';
 import 'package:mobile2/api/workDone_api.dart';
-import 'package:mobile2/screens/dailySummary.dart';
+import 'package:mobile2/components/monthlyTile.dart';
 import 'package:mobile2/screens/login.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
-import 'package:date_range_form_field/date_range_form_field.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile2/utils/functions.dart';
+import 'package:mrx_charts/mrx_charts.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+
+const double GLOBAL_PADDING = 15.0;
+
+const List utlizedEqui = [1.0, 2.0, 6.0, 5.0, 8.0, 2.0, 1.0];
+const List deployedEqui = [1.0, 3.0, 6.0, 7.0, 6.0, 5.0, 6.0];
+const List benchmark = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0];
 
 class MainScreen extends StatefulWidget {
   final String? _id;
@@ -95,6 +102,7 @@ class _MainScreenState extends State<MainScreen> {
   List reasons = List.empty();
   List monthlyValidatedSummary = List.empty();
   List monthlyNonValidatedSummary = List.empty();
+  List monthlyReleased = List.empty();
   List owners = [
     new Owner(value: 'All', text: 'All Equipment'),
     new Owner(value: 'Construck', text: 'Construck equipment'),
@@ -107,6 +115,13 @@ class _MainScreenState extends State<MainScreen> {
       DateTimeRange(start: DateTime.now(), end: DateTime.now());
   Object? _mySelection;
   String loadingText = 'No data found!';
+  bool validatedFound = false;
+  bool nonValidatedFound = false;
+  bool releasedFound = false;
+
+  bool loadingValidated = false;
+  bool loadingNonValidated = false;
+  bool loadingReleased = false;
 
   String _selectedDate = '';
   String _dateCount = '';
@@ -224,7 +239,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _setDurationCheck() {
-    print(_duration!.text);
     setState(() {
       _duration!.text.isNotEmpty
           ? double.parse(_duration!.text) < 5
@@ -234,7 +248,6 @@ class _MainScreenState extends State<MainScreen> {
     });
 
     setState(() {});
-    print(durationIsLess);
   }
 
   @override
@@ -262,27 +275,82 @@ class _MainScreenState extends State<MainScreen> {
           }
         }));
 
-    WorkDatasApi.getValidatedSummary(widget.assignedProject)
-        .then((value) => setState(() {
-              monthlyValidatedSummary = value;
-              if (value.isEmpty) {
-                loadingText = 'No data found!';
-              }
-            }));
+    fetchNonValidatedMonthly();
 
-    WorkDatasApi.getNonValidatedSummary(widget.assignedProject)
-        .then((value) => setState(() {
-              monthlyNonValidatedSummary = value;
-              if (value.isEmpty) {
-                loadingText = 'No data found!';
-              }
-            }));
+    fetchValidatedMonthly();
 
     loadDashboardData();
+
+    fetchReleasedMonthly();
+
+    handleNotifications();
 
     setState(() {
       _duration!.text = '0';
     });
+  }
+
+  void refreshMontlySummaries() {
+    fetchNonValidatedMonthly();
+
+    fetchValidatedMonthly();
+  }
+
+  void fetchNonValidatedMonthly() {
+    setState(() {
+      loadingText = 'Loading data...';
+      monthlyNonValidatedSummary = [];
+      loadingNonValidated = true;
+    });
+    WorkDatasApi.getNonValidatedSummary(widget.assignedProject)
+        .then((value) => setState(() {
+              monthlyNonValidatedSummary = value;
+              loadingNonValidated = false;
+              if (value.isEmpty) {
+                loadingText = 'No data found!';
+                nonValidatedFound = false;
+              } else {
+                nonValidatedFound = true;
+              }
+            }));
+  }
+
+  void fetchReleasedMonthly() {
+    setState(() {
+      loadingText = 'Loading data...';
+      monthlyReleased = [];
+      loadingReleased = true;
+    });
+    WorkDatasApi.getMonthltReleased(widget.assignedProject)
+        .then((value) => setState(() {
+              monthlyReleased = value;
+              loadingReleased = false;
+              if (value.isEmpty) {
+                loadingText = 'No data found!';
+                releasedFound = false;
+              } else {
+                releasedFound = true;
+              }
+            }));
+  }
+
+  void fetchValidatedMonthly() {
+    setState(() {
+      loadingText = 'Loading data...';
+      monthlyValidatedSummary = [];
+      loadingValidated = true;
+    });
+    WorkDatasApi.getValidatedSummary(widget.assignedProject)
+        .then((value) => setState(() {
+              monthlyValidatedSummary = value;
+              loadingValidated = false;
+              if (value.isEmpty) {
+                loadingText = 'No data found!';
+                validatedFound = false;
+              } else {
+                validatedFound = true;
+              }
+            }));
   }
 
   @override
@@ -306,61 +374,114 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = (widget.userType == 'admin' ||
-            widget.userType == 'workshop-admin' ||
-            widget.userType == 'revenue-admin' ||
-            widget.userType == 'admin' ||
-            widget.userType == 'display')
-        ? [
-            buildDashboard(context),
-            buildSettings(),
-          ]
-        : (widget.userType == 'customer-site-manager')
-            ? [
-                buildApprovals(context),
-                buildSettings(),
-              ]
-            : ([
-                buildJobList(context),
-                buildSettings(),
-              ]);
+    List<Widget> screens = [
+      buildJobList(context),
+      buildSettings(),
+    ];
+
+    if (widget.userType == 'admin' ||
+        widget.userType == 'workshop-admin' ||
+        widget.userType == 'revenue-admin' ||
+        widget.userType == 'admin' ||
+        widget.userType == 'display')
+      screens = [
+        buildDashboard(context),
+        buildSettings(),
+      ];
+    else if (widget.userType == 'customer-site-manager')
+      screens = [
+        buildApprovals(context),
+        // buildReports(context),
+        buildSettings(),
+      ];
+    else if (widget.userType == 'customer-project-manager')
+      screens = [
+        buildApprovals(context),
+        buildReports(context),
+        buildSettings(),
+      ];
+    else
+      screens = [
+        buildJobList(context),
+        buildSettings(),
+      ];
 
     const bottomNavigationBarItem = BottomNavigationBarItem(
       icon: Icon(Icons.pie_chart),
       label: 'Dashboard',
-      backgroundColor: Colors.black87,
+      // backgroundColor: Colors.black87,
     );
     const bottomNavigationBarItem2 = BottomNavigationBarItem(
       icon: Icon(Icons.task),
       label: 'Forms',
-      backgroundColor: Colors.black87,
+      // backgroundColor: Colors.black87,
     );
 
     const bottomNavigationBarItem3 = BottomNavigationBarItem(
       icon: const Icon(Icons.settings),
       label: 'Settings',
-      backgroundColor: Colors.black87,
+      // backgroundColor: Colors.black87,
     );
     const bottomNavigationBarItem4 = BottomNavigationBarItem(
       icon: Icon(Icons.assignment_turned_in_outlined),
       label: 'Approvals',
-      backgroundColor: Colors.black87,
+      // backgroundColor: Colors.black87,
+    );
+    const bottomNavigationBarItem5 = BottomNavigationBarItem(
+      icon: Icon(Icons.assessment),
+      label: 'Reports',
+      // backgroundColor: Colors.black87,
     );
 
     return buildAppScaffold(
-        screens,
-        bottomNavigationBarItem,
-        bottomNavigationBarItem3,
-        bottomNavigationBarItem2,
-        bottomNavigationBarItem4);
+      screens,
+      bottomNavigationBarItem,
+      bottomNavigationBarItem3,
+      bottomNavigationBarItem2,
+      bottomNavigationBarItem4,
+      bottomNavigationBarItem5,
+    );
   }
 
   RefreshIndicator buildAppScaffold(
-      List<Widget> screens,
-      BottomNavigationBarItem bottomNavigationBarItem,
-      BottomNavigationBarItem bottomNavigationBarItem3,
-      BottomNavigationBarItem bottomNavigationBarItem2,
-      BottomNavigationBarItem bottomNavigationBarItem4) {
+    List<Widget> screens,
+    BottomNavigationBarItem bottomNavigationBarItem,
+    BottomNavigationBarItem bottomNavigationBarItem3,
+    BottomNavigationBarItem bottomNavigationBarItem2,
+    BottomNavigationBarItem bottomNavigationBarItem4,
+    BottomNavigationBarItem bottomNavigationBarItem5,
+  ) {
+    List<BottomNavigationBarItem> items = [
+      bottomNavigationBarItem2,
+      bottomNavigationBarItem3,
+    ];
+    if (widget.userType == 'admin' ||
+        widget.userType == 'workshop-admin' ||
+        widget.userType == 'revenue-admin' ||
+        widget.userType == 'admin' ||
+        widget.userType == 'display')
+      items = [
+        bottomNavigationBarItem,
+        // bottomNavigationBarItem2,
+        bottomNavigationBarItem3,
+      ];
+    else if (widget.userType == 'customer-site-manager')
+      items = [
+        bottomNavigationBarItem4,
+        bottomNavigationBarItem3,
+      ];
+    else if (widget.userType == "customer-project-manager")
+      items = [
+        bottomNavigationBarItem4,
+        // bottomNavigationBarItem2,
+        bottomNavigationBarItem5,
+        bottomNavigationBarItem3,
+      ];
+    else
+      items = [
+        bottomNavigationBarItem2,
+        bottomNavigationBarItem3,
+      ];
     return RefreshIndicator(
       displacement: 100,
       triggerMode: RefreshIndicatorTriggerMode.onEdge,
@@ -372,73 +493,54 @@ class _MainScreenState extends State<MainScreen> {
           child: screens[currentIndex],
         ),
         bottomNavigationBar: BottomNavigationBar(
-            type: BottomNavigationBarType.shifting,
-            onTap: (index) => setState(() {
-                  currentIndex = index;
-                  _projectController.text = '';
-                  _equipmentController.text = '';
-                  _lowbedController.text = '';
-                  _driverController.text = '';
-                  _lowbedDriverController.text = '';
-                  _workDoneController.text = '';
-                  _reasonController.text = '';
-                  _startIndex.text = '';
-                  _endIndex.text = '';
-                  _duration!.text = '';
-                  _tripsDone.text = '';
-                  project = const Project(
-                      prjDescription: '', prjId: '', customer: '');
-                  machineToMove = const Equipment(
-                      equipmentId: '',
-                      plateNumber: '',
-                      eqDescription: '',
-                      eqType: "");
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) => setState(() {
+            currentIndex = index;
+            _projectController.text = '';
+            _equipmentController.text = '';
+            _lowbedController.text = '';
+            _driverController.text = '';
+            _lowbedDriverController.text = '';
+            _workDoneController.text = '';
+            _reasonController.text = '';
+            _startIndex.text = '';
+            _endIndex.text = '';
+            _duration!.text = '';
+            _tripsDone.text = '';
+            project =
+                const Project(prjDescription: '', prjId: '', customer: '');
+            machineToMove = const Equipment(
+                equipmentId: '',
+                plateNumber: '',
+                eqDescription: '',
+                eqType: "");
 
-                  lowbed = const Equipment(
-                      equipmentId: '',
-                      plateNumber: '',
-                      eqDescription: '',
-                      eqType: '');
-                  workDone = const WorkDone(jobDescription: '', jobId: '');
-                  driver = const User(firstName: '', lastName: '', userId: '');
-                  lowbedDriver =
-                      const User(firstName: '', lastName: '', userId: '');
-                  reason = const Reason(
-                      description: '', reasonId: '', descriptionRw: '');
+            lowbed = const Equipment(
+                equipmentId: '',
+                plateNumber: '',
+                eqDescription: '',
+                eqType: '');
+            workDone = const WorkDone(jobDescription: '', jobId: '');
+            driver = const User(firstName: '', lastName: '', userId: '');
+            lowbedDriver = const User(firstName: '', lastName: '', userId: '');
+            reason =
+                const Reason(description: '', reasonId: '', descriptionRw: '');
 
-                  submitting = false;
-                  dayShift = true;
-                  machineDispatch = false;
-                  siteWork = false;
+            submitting = false;
+            dayShift = true;
+            machineDispatch = false;
+            siteWork = false;
 
-                  movementDateRange =
-                      DateTimeRange(start: DateTime.now(), end: DateTime.now());
+            movementDateRange =
+                DateTimeRange(start: DateTime.now(), end: DateTime.now());
 
-                  workDateRange =
-                      DateTimeRange(start: DateTime.now(), end: DateTime.now());
-                }),
-            currentIndex: currentIndex,
-            // ignore: prefer_const_literals_to_create_immutables
-            items: (widget.userType == 'admin' ||
-                    widget.userType == 'workshop-admin' ||
-                    widget.userType == 'revenue-admin' ||
-                    widget.userType == 'admin' ||
-                    widget.userType == 'display')
-                ? [
-                    bottomNavigationBarItem,
-                    // bottomNavigationBarItem2,
-                    bottomNavigationBarItem3,
-                  ]
-                : (widget.userType == 'customer-site-manager')
-                    ? [
-                        bottomNavigationBarItem4,
-                        // bottomNavigationBarItem2,
-                        bottomNavigationBarItem3,
-                      ]
-                    : ([
-                        bottomNavigationBarItem2,
-                        bottomNavigationBarItem3,
-                      ])),
+            workDateRange =
+                DateTimeRange(start: DateTime.now(), end: DateTime.now());
+          }),
+          currentIndex: currentIndex,
+          // ignore: prefer_const_literals_to_create_immutables
+          items: items,
+        ),
       ),
     );
   }
@@ -540,15 +642,22 @@ class _MainScreenState extends State<MainScreen> {
                 'Cost to be validated',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              Icon(
-                Icons.more_horiz,
-                size: 20,
-                color: Theme.of(context).accentColor,
-              )
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      fetchNonValidatedMonthly();
+                    });
+                  },
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 20,
+                    color: Colors.grey[600],
+                  ))
             ],
           ),
         ),
-        buildMonthlyData(monthlyNonValidatedSummary),
+        buildMonthlyData(monthlyNonValidatedSummary, 'not validated',
+            loadingNonValidated, nonValidatedFound),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15.0),
           child: Row(
@@ -559,21 +668,234 @@ class _MainScreenState extends State<MainScreen> {
                 'Validated Cost',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              Icon(
-                Icons.more_horiz,
-                size: 20,
-                color: Theme.of(context).accentColor,
-              )
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      fetchValidatedMonthly();
+                    });
+                  },
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 20,
+                    color: Colors.grey[600],
+                  ))
             ],
           ),
         ),
-        buildMonthlyData(monthlyValidatedSummary),
+        buildMonthlyData(monthlyValidatedSummary, 'validated', loadingValidated,
+            validatedFound),
       ],
     );
   }
 
-  Widget buildMonthlyData(List monthlySummary) => Padding(
-        padding: const EdgeInsets.all(15.0),
+  SingleChildScrollView buildReports(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          buildTopNav(context),
+          Padding(
+            padding: const EdgeInsets.only(left: 15.0, bottom: 8),
+            child: Text(
+              widget.assignedProject!,
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+          buildChart(context),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Released Costs',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                    onPressed: () {
+                      setState(() {
+                        fetchReleasedMonthly();
+                      });
+                    },
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      size: 20,
+                      color: Colors.grey[600],
+                    ))
+              ],
+            ),
+          ),
+          buildMonthlyData(
+              monthlyReleased, 'released', loadingReleased, releasedFound),
+        ],
+      ),
+    );
+  }
+
+  Padding buildChart(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(GLOBAL_PADDING),
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.all(Radius.circular(12.0))),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 10.0,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Equipment utilization (past 7 days)',
+                    style:
+                        TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 10.0,
+            ),
+            SizedBox(
+              height: 150,
+              // width: 300,
+              child: Chart(
+                  padding: EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+                  layers: [
+                    ChartAxisLayer(
+                      settings: ChartAxisSettings(
+                        x: ChartAxisSettingsAxis(
+                          frequency: 1.0,
+                          max: 13.0,
+                          min: 7.0,
+                          textStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 10.0,
+                          ),
+                        ),
+                        y: ChartAxisSettingsAxis(
+                          frequency: 100.0,
+                          max: [
+                            utlizedEqui.reduce(
+                                (curr, next) => curr > next ? curr : next),
+                          ].reduce((curr, next) => curr > next ? curr : next),
+                          min: 0.0,
+                          textStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 10.0,
+                          ),
+                        ),
+                      ),
+                      labelX: (value) => value.toInt().toString(),
+                      labelY: (value) => value.toInt().toString(),
+                    ),
+                    // ChartBarLayer(
+                    // items: List.generate(
+                    //   13 - 7 + 1,
+                    //   (index) => ChartBarDataItem(
+                    //     color: const Color(0xFF8043F9),
+                    //     value: Random().nextInt(280) + 20,
+                    //     x: index.toDouble() + 7,
+                    //   ),
+                    // ),
+                    // settings: const ChartBarSettings(
+                    //   thickness: 8.0,
+                    //   radius: BorderRadius.all(Radius.circular(4.0)),
+                    //   ),
+                    // ),
+
+                    ChartLineLayer(
+                        items: List.generate(
+                          utlizedEqui.length,
+                          (index) => ChartLineDataItem(
+                            value: utlizedEqui[index],
+                            x: index.toDouble() + 7,
+                          ),
+                        ),
+                        settings: const ChartLineSettings(
+                            thickness: 2.0, color: Colors.blue)),
+
+                    ChartLineLayer(
+                        items: List.generate(
+                          utlizedEqui.length,
+                          (index) => ChartLineDataItem(
+                            value: benchmark[index],
+                            x: index.toDouble() + 7,
+                          ),
+                        ),
+                        settings: const ChartLineSettings(
+                            thickness: 1.0, color: Colors.orange))
+                  ]),
+            ),
+            SizedBox(
+              height: 5.0,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+              child: Row(
+                children: [
+                  Container(
+                    // child: Text('z'),
+                    height: 10,
+                    width: 10,
+                    decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.all(Radius.circular(50))),
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    'Equipment Utilization',
+                    style: TextStyle(fontSize: 12.0),
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 5.0,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+              child: Row(
+                children: [
+                  Container(
+                    // child: Text('z'),
+                    height: 10,
+                    width: 10,
+                    decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.all(Radius.circular(50))),
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    'Benchmark',
+                    style: TextStyle(fontSize: 12.0),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildMonthlyData(List monthlySummary, String category,
+          bool loadingState, bool dataFound) =>
+      Padding(
+        padding: const EdgeInsets.all(GLOBAL_PADDING),
         child: Container(
           decoration: BoxDecoration(
               color: Colors.white,
@@ -585,71 +907,41 @@ class _MainScreenState extends State<MainScreen> {
                   blurRadius: 2.0,
                 )
               ]),
-          padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-          child: monthlySummary.isEmpty
+          padding: EdgeInsets.symmetric(
+              horizontal: GLOBAL_PADDING, vertical: GLOBAL_PADDING - 5),
+          child: loadingState == true
               ? Center(
-                  child: Text('Loading data...'),
+                  child: SizedBox(
+                    height: 15,
+                    width: 15,
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).accentColor,
+                      strokeWidth: 1.5,
+                    ),
+                  ),
                 )
               : ListView.builder(
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
                     final monthlyData = monthlySummary[index];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            border: index == 0
-                                ? const Border() // This will create no border for the first item
-                                : Border(
-                                    top: BorderSide(
-                                        width: 1,
-                                        color: Colors.grey[
-                                            300]!)), // This will create top borders for the rest
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(monthlyData['monthYear'],
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey[700])),
-                                    Text('RWF ' + monthlyData['totalRevenue'],
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey[500])),
-                                  ],
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.arrow_forward_ios_outlined,
-                                    color: Colors.grey[400],
-                                    size: 15,
-                                  ),
-                                  onPressed: () => {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DailySummary(
-                                            monthlyData['id']['month'],
-                                            monthlyData['id']['year'],
-                                            widget.assignedProject),
-                                      ),
-                                    )
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      ],
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: index == 0
+                            ? const Border() // This will create no border for the first item
+                            : Border(
+                                top: BorderSide(
+                                    width: 1,
+                                    color: Colors.grey[
+                                        300]!)), // This will create top borders for the rest
+                      ),
+                      child: MonthlyTile(
+                        monthlyData: monthlyData,
+                        widget: widget,
+                        category: category,
+                        refreshMonthlySummary: refreshMontlySummaries,
+                        refreshValidated: fetchValidatedMonthly,
+                        refreshNonValidated: fetchNonValidatedMonthly,
+                      ),
                     );
                   },
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -1202,6 +1494,7 @@ class _MainScreenState extends State<MainScreen> {
                 IconButton(
                     onPressed: () async {
                       await storage.deleteAll();
+                      await UserApi.updateToken(widget.userId!, "");
                       Navigator.pop(context);
                       Navigator.push(
                         context,

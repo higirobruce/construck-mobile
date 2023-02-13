@@ -11,7 +11,7 @@ class RevenueAnalyticsApi {
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/getAnalytics');
+        'https://construck-backend-live.herokuapp.com/works/getAnalytics');
     final response = await http.post(url, body: {
       "startDate": startDate,
       "endDate": endDate,

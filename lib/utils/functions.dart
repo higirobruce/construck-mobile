@@ -1,5 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+String? token = '';
 
 Padding buildInfoTile(title, icon, value, loading) {
   return Padding(
@@ -60,4 +64,49 @@ Container buildDateRange(showDateRange, _onSelectionChanged) {
       : Container(
           child: null,
         );
+}
+
+handleNotifications() async {
+  await Firebase.initializeApp();
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print('Got a message whilst in the foreground!');
+    print('Message data: ${message.data}');
+
+    if (message.notification != null) {
+      print('Message also contained a notification: ${message.notification}');
+    }
+  });
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+}
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp();
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+  print('User granted permission: ${settings.authorizationStatus}');
+  token = await messaging.getToken(
+      vapidKey: "AIzaSyDUebe2JDnqvql7-D9lHcD-8rhgp6J1xVk");
+
+  print("Handling a background message: ${message.messageId}");
+}
+
+getToken() async {
+  await Firebase.initializeApp();
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  return await messaging.getToken(
+      vapidKey: "AIzaSyDUebe2JDnqvql7-D9lHcD-8rhgp6J1xVk");
 }

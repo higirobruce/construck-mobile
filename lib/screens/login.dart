@@ -5,6 +5,7 @@ import 'package:mobile2/screens/mainScreen.dart';
 import 'package:mobile2/screens/success.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobile2/utils/functions.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -12,6 +13,9 @@ class Login extends StatefulWidget {
   @override
   _LoginState createState() => _LoginState();
 }
+
+const double HORIZONTAL_PADDING = 15.0;
+const double BORDER_SIZE = 12;
 
 class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
@@ -73,10 +77,11 @@ class _LoginState extends State<Login> {
     }
   }
 
-  login(context, username, password) {
+  login(context, username, password) async {
     setState(() {
       submitting = true;
     });
+    String? _token = await getToken();
     UserApi.login(password, username).then(
       (value) async => {
         if (value['allowed'] == true)
@@ -96,6 +101,7 @@ class _LoginState extends State<Login> {
             await storage.write(key: 'userType', value: userType),
             await storage.write(key: 'initials', value: initials),
             await storage.write(key: 'assignedProject', value: assignedProject),
+            await UserApi.updateToken(_id, _token),
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
@@ -105,7 +111,7 @@ class _LoginState extends State<Login> {
                 (Route<dynamic> route) => route is Success)
           }
         else
-          {ScaffoldMessenger.of(context).showSnackBar(snackBar)},
+          {print(value), ScaffoldMessenger.of(context).showSnackBar(snackBar)},
         setState(() {
           submitting = false;
         }),
@@ -117,16 +123,20 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(HORIZONTAL_PADDING * 2),
         child: Center(
           child: SingleChildScrollView(
             child: Column(
               children: [
                 const Text(
                   'Shabika App',
-                  style: TextStyle(fontSize: 32.0),
+                  style: TextStyle(fontSize: 20),
                 ),
                 buildLoginForm(context),
+                Padding(
+                  padding: const EdgeInsets.only(top: HORIZONTAL_PADDING),
+                  child: Image.asset('assets/images/logo.png', height: 60),
+                ),
               ],
             ),
           ),
@@ -139,7 +149,7 @@ class _LoginState extends State<Login> {
     return Form(
       key: _formKey,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(HORIZONTAL_PADDING),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +161,7 @@ class _LoginState extends State<Login> {
               CustomPasswordField(passwordController: passwordController),
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
+                  padding: const EdgeInsets.only(top: HORIZONTAL_PADDING),
                   child: !submitting
                       ? ElevatedButton(
                           onPressed: () {
@@ -162,7 +172,14 @@ class _LoginState extends State<Login> {
                           },
                           child: const Text('OHEREZA'),
                         )
-                      : const Text('Ihangane....'),
+                      : SizedBox(
+                          height: 15,
+                          width: 15,
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).accentColor,
+                            strokeWidth: 1.5,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -184,10 +201,11 @@ class CustomTextLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 5),
+      padding: const EdgeInsets.only(
+          bottom: HORIZONTAL_PADDING / 2, left: HORIZONTAL_PADDING / 3),
       child: Text(
         lable,
-        style: TextStyle(color: Colors.blueGrey, fontSize: 16.0),
+        style: TextStyle(color: Colors.blueGrey, fontSize: HORIZONTAL_PADDING),
       ),
     );
   }
@@ -211,9 +229,10 @@ class CustomInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(BORDER_SIZE)),
       child: Padding(
-        padding: const EdgeInsets.only(left: 12.0),
+        padding: const EdgeInsets.only(left: HORIZONTAL_PADDING),
         child: TextFormField(
           decoration: InputDecoration(
             border: InputBorder.none,
@@ -249,9 +268,10 @@ class CustomPasswordField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(BORDER_SIZE)),
       child: Padding(
-        padding: const EdgeInsets.only(left: 12.0),
+        padding: const EdgeInsets.only(left: HORIZONTAL_PADDING),
         child: TextFormField(
           decoration: InputDecoration(
             border: InputBorder.none,

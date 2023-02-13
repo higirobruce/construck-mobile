@@ -5,14 +5,16 @@ import 'package:mobile2/api/workDone_api.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
+Codec<String, String> stringToBase64 = utf8.fuse(base64);
+String encoded = stringToBase64.encode(credentials);
+
 class WorkDatasApi {
   static Future<List<WorkData>> getWorkData(userId) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
-    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
-    Codec<String, String> stringToBase64 = utf8.fuse(base64);
-    String encoded = stringToBase64.encode(credentials);
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/v3/driver/' +
+        'https://construck-backend-live.herokuapp.com/works/v3/driver/' +
             userId);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -39,12 +41,12 @@ class WorkDatasApi {
   }
 
   static Future getValidatedSummary(projectName) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/monthlyValidatedRevenues/' +
+        'https://construck-backend-live.herokuapp.com/works/monthlyValidatedRevenues/' +
             projectName);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -59,12 +61,113 @@ class WorkDatasApi {
   }
 
   static Future getNonValidatedSummary(projectName) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
-    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
-    Codec<String, String> stringToBase64 = utf8.fuse(base64);
-    String encoded = stringToBase64.encode(credentials);
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/monthlyNonValidatedRevenues/' +
+        'https://construck-backend-live.herokuapp.com/works/monthlyNonValidatedRevenues/' +
+            projectName);
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List monthlySummary = json.decode(response.body);
+
+      return monthlySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
+  static Future getDailyValidatedSummary(projectName, month, year) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/dailyValidatedRevenues/' +
+            projectName +
+            '?month=' +
+            month.toString() +
+            '&year=' +
+            year.toString());
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List dailySummary = json.decode(response.body);
+
+      return dailySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
+  static Future getDailyNonValidatedSummary(projectName, month, year) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/dailyNonValidatedRevenues/' +
+            projectName +
+            '?month=' +
+            month.toString() +
+            '&year=' +
+            year.toString());
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List dailySummary = json.decode(response.body);
+
+      return dailySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
+  static Future getDailyListValidated(projectName, transactionDate) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/validatedByDay/' +
+            projectName +
+            '?transactionDate=' +
+            transactionDate);
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List dailySummary = json.decode(response.body);
+
+      return dailySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
+  static Future getDailyListNonValidated(projectName, transactionDate) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/nonValidatedByDay/' +
+            projectName +
+            '?transactionDate=' +
+            transactionDate);
+
+    final response =
+        await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 200) {
+      final List dailySummary = json.decode(response.body);
+
+      return dailySummary.map((json) => json).toList();
+    } else {
+      throw Exception();
+    }
+  }
+
+  static Future getMonthltReleased(projectName) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/projects/releasedRevenue/' +
             projectName);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -90,10 +193,10 @@ class WorkDatasApi {
       DateTime start,
       DateTime end,
       String sitework) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works');
 
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/mobileData');
+        'https://construck-backend-live.herokuapp.com/works/mobileData');
     final response = await http.post(url, body: {
       "project": jsonEncode(project),
       "equipment": jsonEncode(equipment),
@@ -119,13 +222,10 @@ class WorkDatasApi {
 
   static Future<bool> startJob(String jobId, String startIndex,
       String startedBy, String postingDate) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
-    String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
-    Codec<String, String> stringToBase64 = utf8.fuse(base64);
-    String encoded = stringToBase64.encode(credentials);
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/start/' + jobId);
+
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/start/' +
-            jobId);
+        'https://construck-backend-live.herokuapp.com/works/start/' + jobId);
     final response = await http.put(url, body: {
       "startIndex": startIndex,
       "startedBy": startedBy,
@@ -149,10 +249,9 @@ class WorkDatasApi {
       String comment,
       String stoppedBy,
       String postingDate) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/stop/' + jobId);
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/stop/' + jobId);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/works/stop/' +
-            jobId);
+        'https://construck-backend-live.herokuapp.com/works/stop/' + jobId);
     final response = await http.put(url, body: {
       "endIndex": endIndex,
       "duration": duration == "" ? "5" : duration,
@@ -160,9 +259,139 @@ class WorkDatasApi {
       "comment": comment,
       "stoppedBy": stoppedBy,
       "postingDate": postingDate
+    }, headers: {
+      "Authorization": 'Basic ' + encoded
     });
 
-    print(stoppedBy);
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> releaseMonthlyCost(projectName, month, year) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/stop/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/releaseValidated/' +
+            projectName +
+            '?month=' +
+            month.toString() +
+            '&year=' +
+            year.toString());
+    final response =
+        await http.put(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode != 404) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> rejectMonthlyCost(
+      projectName, month, year, reason) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/stop/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/releaseValidated/' +
+            projectName +
+            '?month=' +
+            month.toString() +
+            '&year=' +
+            year.toString());
+    final response = await http.put(url,
+        headers: {"Authorization": 'Basic ' + encoded},
+        body: {"reason": reason});
+
+    if (response.statusCode != 404) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> approve(String jobId) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/start/' + jobId);
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/approve/' + jobId);
+    final response =
+        await http.put(url, headers: {"Authorization": 'Basic ' + encoded});
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> reject(String jobId, reason) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/start/' + jobId);
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/reject/' + jobId);
+    final response = await http.put(url,
+        headers: {"Authorization": 'Basic ' + encoded},
+        body: {"reasonForRejection": reason});
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> approveDailySiteWork(
+      String jobId,
+      String postingDate,
+      String approvedRevenue,
+      String approvedDuration,
+      String approvedExpenditure) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/start/' + jobId);
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/approveDailyWork/' +
+            jobId);
+    final response = await http.put(url, headers: {
+      "Authorization": 'Basic ' + encoded
+    }, body: {
+      "postingDate": postingDate,
+      // "approvedBy":"",
+      "approvedRevenue": approvedRevenue,
+      "approvedDuration": approvedDuration,
+      "approvedExpenditure": approvedExpenditure,
+    });
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> rejectDailySiteWork(
+      String jobId,
+      String postingDate,
+      String rejectedRevenue,
+      String rejectedDuration,
+      String rejectedExpenditure,
+      String reason) async {
+    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/works/start/' + jobId);
+
+    final url = Uri.parse(
+        'https://construck-backend-live.herokuapp.com/works/rejectDailyWork/' +
+            jobId);
+    final response = await http.put(url, headers: {
+      "Authorization": 'Basic ' + encoded
+    }, body: {
+      "postingDate": postingDate,
+      // "approvedBy":"",
+      "rejectedRevenue": rejectedRevenue,
+      "rejectedDuration": rejectedDuration,
+      "rejectedExpenditure": rejectedExpenditure,
+      "reason": reason
+    });
+
     if (response.statusCode == 201) {
       return true;
     } else {
