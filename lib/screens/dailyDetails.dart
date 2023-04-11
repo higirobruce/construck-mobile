@@ -60,7 +60,7 @@ class _DailyDetailsState extends State<DailyDetails> {
                 buildTopNav(context),
               ],
             ),
-            buildDailyList(dailydetailsList)
+            Expanded(child: buildDailyList(dailydetailsList))
           ],
         )),
       ),

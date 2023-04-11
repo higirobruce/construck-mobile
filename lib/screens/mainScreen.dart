@@ -33,8 +33,9 @@ class MainScreen extends StatefulWidget {
   final String? userType;
   final String? initials;
   final String? assignedProject;
+  final List<dynamic>? assignedProjects;
   const MainScreen(this._id, this.name, this.userId, this.userType,
-      this.initials, this.assignedProject,
+      this.initials, this.assignedProject, this.assignedProjects,
       {Key? key})
       : super(key: key);
   @override
@@ -386,6 +387,8 @@ class _MainScreenState extends State<MainScreen> {
         widget.userType == 'display')
       screens = [
         buildDashboard(context),
+        buildApprovals(context),
+        buildReports(context),
         buildSettings(),
       ];
     else if (widget.userType == 'customer-site-manager')
@@ -462,6 +465,8 @@ class _MainScreenState extends State<MainScreen> {
         widget.userType == 'display')
       items = [
         bottomNavigationBarItem,
+        bottomNavigationBarItem4,
+        bottomNavigationBarItem5,
         // bottomNavigationBarItem2,
         bottomNavigationBarItem3,
       ];

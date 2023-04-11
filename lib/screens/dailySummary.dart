@@ -60,8 +60,7 @@ class _DailySummaryState extends State<DailySummary> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-            child: Column(
+        child: Column(
           children: [
             Row(
               children: [
@@ -75,9 +74,9 @@ class _DailySummaryState extends State<DailySummary> {
                 buildTopNav(context),
               ],
             ),
-            buildDailyData(dailySummary)
+            Expanded(child: buildDailyData(dailySummary))
           ],
-        )),
+        ),
       ),
     );
   }

@@ -35,6 +35,7 @@ class _LoginState extends State<Login> {
   String userType = '';
   String initials = '';
   String assignedProject = '';
+  List<dynamic> assignedProjects = [];
   bool submitting = false;
 
   @override
@@ -51,6 +52,8 @@ class _LoginState extends State<Login> {
     String? _savedUserType = await storage.read(key: 'userType');
     String? _savedInitials = await storage.read(key: 'initials');
     String? _savedAssignedProject = await storage.read(key: 'assignedProject');
+    List<dynamic>? _savedAssignedProjects =
+        (await storage.read(key: 'assignedProjects')) as List<dynamic>?;
 
     if (_savedId != null &&
         _savedUsername != null &&
@@ -61,7 +64,9 @@ class _LoginState extends State<Login> {
         _savedInitials != null &&
         _savedInitials.isNotEmpty &&
         _savedAssignedProject != null &&
-        _savedAssignedProject.isNotEmpty) {
+        _savedAssignedProject.isNotEmpty &&
+        _savedAssignedProjects != null &&
+        _savedAssignedProjects.isNotEmpty) {
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -71,7 +76,8 @@ class _LoginState extends State<Login> {
                 _savedUserId,
                 _savedUserType,
                 _savedInitials,
-                _savedAssignedProject),
+                _savedAssignedProject,
+                _savedAssignedProjects),
           ),
           (Route<dynamic> route) => route is Success);
     }
@@ -95,18 +101,21 @@ class _LoginState extends State<Login> {
             initials = value['employee']['firstName'][0] +
                 value['employee']['lastName'][0],
             assignedProject = value['employee']['assignedProject'],
+            assignedProjects = value['employee']['assignedProjects'],
             await storage.write(key: '_id', value: _id),
             await storage.write(key: 'userName', value: userName),
             await storage.write(key: 'userId', value: userId),
             await storage.write(key: 'userType', value: userType),
             await storage.write(key: 'initials', value: initials),
             await storage.write(key: 'assignedProject', value: assignedProject),
+            await storage.write(
+                key: 'assignedProjects', value: assignedProjects.toString()),
             // await UserApi.updateToken(_id, _token),
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
                   builder: (context) => MainScreen(_id, userName, userId,
-                      userType, initials, assignedProject),
+                      userType, initials, assignedProject, assignedProjects),
                 ),
                 (Route<dynamic> route) => route is Success)
           }
