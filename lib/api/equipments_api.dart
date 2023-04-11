@@ -4,13 +4,12 @@ import 'package:http/http.dart' as http;
 
 class EquipmentsApi {
   static Future<List<Equipment>> getEquipmentSuggestions(String query) async {
-    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/equipments');
+    // final url = Uri.parse('http://localhost:9000/equipments');
 
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
-    final url =
-        Uri.parse('https://construck-backend-live.herokuapp.com/equipments/v2');
+    final url = Uri.parse('http://localhost:9000/equipments/v2');
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -31,12 +30,11 @@ class EquipmentsApi {
   }
 
   static Future<List<Equipment>> getLowbedSuggestions(String query) async {
-    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/equipments');
+    // final url = Uri.parse('http://localhost:9000/equipments');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
-    final url =
-        Uri.parse('https://construck-backend-live.herokuapp.com/equipments/v2');
+    final url = Uri.parse('http://localhost:9000/equipments/v2');
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 

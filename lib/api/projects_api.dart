@@ -5,12 +5,11 @@ import 'package:http/http.dart' as http;
 
 class ProjectsApi {
   static FutureOr<Iterable<Project>> getUserSuggestions(String query) async {
-    // final url = Uri.parse('https://construck-backend-live.herokuapp.com/projects');
+    // final url = Uri.parse('http://localhost:9000/projects');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
-    final url =
-        Uri.parse('https://construck-backend-live.herokuapp.com/projects/v2');
+    final url = Uri.parse('http://localhost:9000/projects/v2');
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 

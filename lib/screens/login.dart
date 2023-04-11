@@ -101,7 +101,7 @@ class _LoginState extends State<Login> {
             await storage.write(key: 'userType', value: userType),
             await storage.write(key: 'initials', value: initials),
             await storage.write(key: 'assignedProject', value: assignedProject),
-            await UserApi.updateToken(_id, _token),
+            // await UserApi.updateToken(_id, _token),
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(

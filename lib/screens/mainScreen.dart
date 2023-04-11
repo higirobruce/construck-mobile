@@ -1471,7 +1471,7 @@ class _MainScreenState extends State<MainScreen> {
             Row(
               children: [
                 Text(
-                  widget.initials!,
+                  widget.name!,
                   style: const TextStyle(
                       fontSize: 12, fontWeight: FontWeight.bold),
                 ),
@@ -1494,7 +1494,7 @@ class _MainScreenState extends State<MainScreen> {
                 IconButton(
                     onPressed: () async {
                       await storage.deleteAll();
-                      await UserApi.updateToken(widget.userId!, "");
+                      // await UserApi.updateToken(widget.userId!, "");
                       Navigator.pop(context);
                       Navigator.push(
                         context,
