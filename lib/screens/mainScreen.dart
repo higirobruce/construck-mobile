@@ -1473,7 +1473,7 @@ class _MainScreenState extends State<MainScreen> {
                 Text(
                   widget.name!,
                   style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.bold),
+                      fontSize: 10, fontWeight: FontWeight.bold),
                 ),
                 (widget.userType == 'admin' ||
                         widget.userType == 'workshop-admin' ||
