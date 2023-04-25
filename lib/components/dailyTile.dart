@@ -200,6 +200,8 @@ class _DailyTileState extends State<DailyTile> {
     var strRevenue = widget.dailyData['strRevenue'];
     var transactionDate = widget.dailyData['transactionDate'];
     var plateNumber = widget.dailyData['equipment']['plateNumber'];
+    var eqType = widget.dailyData['equipment']['eqDescription'];
+    var shift = widget.dailyData['dispatch']['shift'];
     var uom = widget.dailyData['equipment']['uom'];
     var isSiteWork = widget.dailyData['siteWork'];
     var durationString = isSiteWork
@@ -230,7 +232,12 @@ class _DailyTileState extends State<DailyTile> {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey[500])),
-              Text(plateNumber,
+              Text(plateNumber + '-' + eqType,
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700])),
+              Text(shift,
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
