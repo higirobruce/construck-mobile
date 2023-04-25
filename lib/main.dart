@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:mobile2/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile2/theme/them_constants.dart';

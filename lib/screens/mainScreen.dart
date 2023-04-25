@@ -2,21 +2,29 @@
 
 import 'dart:math';
 
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile2/api/asset_avblty_analytics_api.dart';
 import 'package:mobile2/api/downtime_analytics_api.dart';
+import 'package:mobile2/api/equipmentTypes.dart';
 import 'package:mobile2/api/equipments_api.dart';
 import 'package:mobile2/api/projects_api.dart';
 import 'package:mobile2/api/reasons_api.dart';
+import 'package:mobile2/api/requests_api.dart';
 import 'package:mobile2/api/revenues_analytics_api.dart';
 import 'package:mobile2/api/user_api.dart';
 import 'package:mobile2/api/workData_api.dart';
 import 'package:mobile2/api/workDone_api.dart';
+import 'package:mobile2/components/bottomSheetDataSelector.dart';
+import 'package:mobile2/components/bottomSheetForm.dart';
+import 'package:mobile2/components/customTextField.dart';
 import 'package:mobile2/components/monthlyTile.dart';
 import 'package:mobile2/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobile2/theme/them_constants.dart';
 import 'package:mobile2/utils/functions.dart';
+import 'package:mobile2/utils/types.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
@@ -32,10 +40,9 @@ class MainScreen extends StatefulWidget {
   final String? name;
   final String? userType;
   final String? initials;
-  final String? assignedProject;
   final List<dynamic>? assignedProjects;
   const MainScreen(this._id, this.name, this.userId, this.userType,
-      this.initials, this.assignedProject, this.assignedProjects,
+      this.initials, this.assignedProjects,
       {Key? key})
       : super(key: key);
   @override
@@ -63,6 +70,9 @@ class _MainScreenState extends State<MainScreen> {
   final TextEditingController _hours = TextEditingController();
   final TextEditingController _searchCustomerCntrl = TextEditingController();
   final TextEditingController _searchProjectCntrl = TextEditingController();
+  final TextEditingController reqReferenceController = TextEditingController();
+  final TextEditingController locationController = TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
 
   final storage = const FlutterSecureStorage();
 
@@ -134,8 +144,18 @@ class _MainScreenState extends State<MainScreen> {
   String _rangeCount = '';
   String searchCustomer = '';
   String searchProject = '';
+  String monitoredProject = '';
+  String selectedEquipmentType = '';
+  String selectedShift = '';
 
   String? _selectedOwner = 'All';
+
+  List<EquipmentRequest> requests = [];
+  List<EquipmentType> equipmentTypes = [];
+  List<ShiftType> shifts = [
+    ShiftType(description: 'Day shift', id: 'dayShift'),
+    ShiftType(description: 'Nigt shift', id: 'nightShift'),
+  ].toList();
 
   getCurrentDate() {
     final now = DateTime.now();
@@ -258,6 +278,7 @@ class _MainScreenState extends State<MainScreen> {
     _duration!.addListener(_setDurationCheck);
     setState(() {
       loadingText = 'Loading data...';
+      monitoredProject = widget.assignedProjects![0]['description'];
     });
 
     // getCurrentDate();
@@ -276,101 +297,23 @@ class _MainScreenState extends State<MainScreen> {
           }
         }));
 
-    fetchNonValidatedMonthly();
+    fetchNonValidatedMonthly(monitoredProject);
 
-    fetchValidatedMonthly();
+    fetchValidatedMonthly(monitoredProject);
+
+    fetchReleasedMonthly(monitoredProject);
 
     loadDashboardData();
 
-    fetchReleasedMonthly();
+    fetchRequests();
 
-    handleNotifications();
+    fetchEquipmentTypes();
+
+    // handleNotifications();
 
     setState(() {
       _duration!.text = '0';
     });
-  }
-
-  void refreshMontlySummaries() {
-    fetchNonValidatedMonthly();
-
-    fetchValidatedMonthly();
-  }
-
-  void fetchNonValidatedMonthly() {
-    setState(() {
-      loadingText = 'Loading data...';
-      monthlyNonValidatedSummary = [];
-      loadingNonValidated = true;
-    });
-    WorkDatasApi.getNonValidatedSummary(widget.assignedProject)
-        .then((value) => setState(() {
-              monthlyNonValidatedSummary = value;
-              loadingNonValidated = false;
-              if (value.isEmpty) {
-                loadingText = 'No data found!';
-                nonValidatedFound = false;
-              } else {
-                nonValidatedFound = true;
-              }
-            }));
-  }
-
-  void fetchReleasedMonthly() {
-    setState(() {
-      loadingText = 'Loading data...';
-      monthlyReleased = [];
-      loadingReleased = true;
-    });
-    WorkDatasApi.getMonthltReleased(widget.assignedProject)
-        .then((value) => setState(() {
-              monthlyReleased = value;
-              loadingReleased = false;
-              if (value.isEmpty) {
-                loadingText = 'No data found!';
-                releasedFound = false;
-              } else {
-                releasedFound = true;
-              }
-            }));
-  }
-
-  void fetchValidatedMonthly() {
-    setState(() {
-      loadingText = 'Loading data...';
-      monthlyValidatedSummary = [];
-      loadingValidated = true;
-    });
-    WorkDatasApi.getValidatedSummary(widget.assignedProject)
-        .then((value) => setState(() {
-              monthlyValidatedSummary = value;
-              loadingValidated = false;
-              if (value.isEmpty) {
-                loadingText = 'No data found!';
-                validatedFound = false;
-              } else {
-                validatedFound = true;
-              }
-            }));
-  }
-
-  @override
-  void dispose() {
-    _duration!.dispose();
-    super.dispose();
-  }
-
-  Future<void> refresh() {
-    setState(() {
-      forms = List.empty();
-      loadingText = 'Loading data...';
-    });
-    return WorkDatasApi.getWorkData(widget._id).then((value) => setState(() {
-          forms = value;
-          if (value.isEmpty) {
-            loadingText = 'No data found!';
-          }
-        }));
   }
 
   @override
@@ -393,7 +336,9 @@ class _MainScreenState extends State<MainScreen> {
       ];
     else if (widget.userType == 'customer-site-manager')
       screens = [
+        buildRequestsScreen(context),
         buildApprovals(context),
+        buildReports(context),
         // buildReports(context),
         buildSettings(),
       ];
@@ -409,54 +354,84 @@ class _MainScreenState extends State<MainScreen> {
         buildSettings(),
       ];
 
-    const bottomNavigationBarItem = BottomNavigationBarItem(
+    const bottomNavDashboard = BottomNavigationBarItem(
       icon: Icon(Icons.pie_chart),
       label: 'Dashboard',
       // backgroundColor: Colors.black87,
     );
-    const bottomNavigationBarItem2 = BottomNavigationBarItem(
+    const bottomNavDispatches = BottomNavigationBarItem(
       icon: Icon(Icons.task),
       label: 'Forms',
       // backgroundColor: Colors.black87,
     );
-
-    const bottomNavigationBarItem3 = BottomNavigationBarItem(
+    const bottomNavSettings = BottomNavigationBarItem(
       icon: const Icon(Icons.settings),
       label: 'Settings',
       // backgroundColor: Colors.black87,
     );
-    const bottomNavigationBarItem4 = BottomNavigationBarItem(
+    const bottomNavRevApprovals = BottomNavigationBarItem(
       icon: Icon(Icons.assignment_turned_in_outlined),
       label: 'Approvals',
       // backgroundColor: Colors.black87,
     );
-    const bottomNavigationBarItem5 = BottomNavigationBarItem(
+    const bottomNavReports = BottomNavigationBarItem(
       icon: Icon(Icons.assessment),
       label: 'Reports',
       // backgroundColor: Colors.black87,
     );
+    const bottomNavRequests = BottomNavigationBarItem(
+      icon: Icon(Icons.task),
+      label: 'Requests',
+      // backgroundColor: Colors.black87,
+    );
 
     return buildAppScaffold(
-      screens,
-      bottomNavigationBarItem,
-      bottomNavigationBarItem3,
-      bottomNavigationBarItem2,
-      bottomNavigationBarItem4,
-      bottomNavigationBarItem5,
-    );
+        screens,
+        bottomNavDashboard,
+        bottomNavSettings,
+        bottomNavDispatches,
+        bottomNavRevApprovals,
+        bottomNavReports,
+        bottomNavRequests);
   }
 
-  RefreshIndicator buildAppScaffold(
+  @override
+  void dispose() {
+    _duration!.dispose();
+    super.dispose();
+  }
+
+  Future<void> refresh() {
+    setState(() {
+      forms = List.empty();
+      loadingText = 'Loading data...';
+    });
+
+    fetchNonValidatedMonthly(monitoredProject);
+
+    fetchValidatedMonthly(monitoredProject);
+
+    fetchReleasedMonthly(monitoredProject);
+    return WorkDatasApi.getWorkData(widget._id).then((value) => setState(() {
+          forms = value;
+          if (value.isEmpty) {
+            loadingText = 'No data found!';
+          }
+        }));
+  }
+
+  buildAppScaffold(
     List<Widget> screens,
-    BottomNavigationBarItem bottomNavigationBarItem,
-    BottomNavigationBarItem bottomNavigationBarItem3,
-    BottomNavigationBarItem bottomNavigationBarItem2,
-    BottomNavigationBarItem bottomNavigationBarItem4,
-    BottomNavigationBarItem bottomNavigationBarItem5,
+    BottomNavigationBarItem bottomNavDashboard,
+    BottomNavigationBarItem bottomNavSettings,
+    BottomNavigationBarItem bottomNavDispatches,
+    BottomNavigationBarItem bottomNavRevApprovals,
+    BottomNavigationBarItem bottomNavReports,
+    BottomNavigationBarItem bottomNavRequests,
   ) {
     List<BottomNavigationBarItem> items = [
-      bottomNavigationBarItem2,
-      bottomNavigationBarItem3,
+      bottomNavDispatches,
+      bottomNavSettings,
     ];
     if (widget.userType == 'admin' ||
         widget.userType == 'workshop-admin' ||
@@ -464,29 +439,32 @@ class _MainScreenState extends State<MainScreen> {
         widget.userType == 'admin' ||
         widget.userType == 'display')
       items = [
-        bottomNavigationBarItem,
-        bottomNavigationBarItem4,
-        bottomNavigationBarItem5,
-        // bottomNavigationBarItem2,
-        bottomNavigationBarItem3,
+        bottomNavDashboard,
+        bottomNavRevApprovals,
+        bottomNavReports,
+        bottomNavSettings,
       ];
     else if (widget.userType == 'customer-site-manager')
       items = [
-        bottomNavigationBarItem4,
-        bottomNavigationBarItem3,
+        bottomNavRequests,
+        bottomNavRevApprovals,
+        // bottomNavigationBarItem2,
+        bottomNavReports,
+        bottomNavSettings,
       ];
     else if (widget.userType == "customer-project-manager")
       items = [
-        bottomNavigationBarItem4,
+        bottomNavRevApprovals,
         // bottomNavigationBarItem2,
-        bottomNavigationBarItem5,
-        bottomNavigationBarItem3,
+        bottomNavReports,
+        bottomNavSettings,
       ];
     else
       items = [
-        bottomNavigationBarItem2,
-        bottomNavigationBarItem3,
+        bottomNavDispatches,
+        bottomNavSettings,
       ];
+
     return RefreshIndicator(
       displacement: 100,
       triggerMode: RefreshIndicatorTriggerMode.onEdge,
@@ -550,150 +528,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  SingleChildScrollView buildDashboard(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          buildTopNav(context),
-          buildFilters(showFilters),
-          buildDateRange(showDateRange, _onSelectionChanged),
-          widget.userType == 'revenue-admin' ||
-                  widget.userType == 'admin' ||
-                  widget.userType == 'display'
-              ? buildInfoTile(
-                  'Projected Revenues',
-                  const Icon(Icons.account_balance_wallet_rounded),
-                  '$projectedRevenue RWF',
-                  loadingProjectedRev)
-              : Container(
-                  child: null,
-                ),
-          widget.userType == 'revenue-admin' ||
-                  widget.userType == 'admin' ||
-                  widget.userType == 'display'
-              ? buildInfoTile(
-                  'Actual Revenues',
-                  const Icon(Icons.money, color: Colors.blue),
-                  "$actualRevenue RWF",
-                  loadingActualRev)
-              : Container(
-                  child: null,
-                ),
-          buildInfoTile(
-              'Asset Utilization',
-              const Icon(Icons.trending_up_outlined, color: Colors.green),
-              '$assetUtilization %',
-              loadingAssetUtilization),
-          buildInfoTile(
-              'Asset availability',
-              const Icon(Icons.event_available, color: Colors.orange),
-              '$assetAvailability %',
-              loadingAssetAvailability),
-          buildInfoTile(
-              'Average downtime',
-              const Icon(Icons.timer, color: Colors.red),
-              "$avgHours Hours",
-              loadingAvgDowntime),
-        ],
-      ),
-    );
-  }
-
-  Column buildJobList(BuildContext context) {
-    return Column(
-      children: [
-        buildTopNav(context),
-        Expanded(
-          child: forms!.isEmpty
-              ? Center(
-                  child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(loadingText),
-                    loadingText == 'No data found!'
-                        ? IconButton(
-                            icon: const Icon(Icons.refresh),
-                            color: Colors.orange,
-                            onPressed: refresh,
-                          )
-                        : const Text('')
-                  ],
-                ))
-              : buildJobs(forms),
-        ),
-      ],
-    );
-  }
-
-  Column buildApprovals(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        buildTopNav(context),
-        Padding(
-          padding: const EdgeInsets.only(left: 15.0, bottom: 8),
-          child: Text(
-            widget.assignedProject!,
-            style: TextStyle(fontSize: 13),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'Cost to be validated',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      fetchNonValidatedMonthly();
-                    });
-                  },
-                  icon: Icon(
-                    Icons.refresh_rounded,
-                    size: 20,
-                    color: Colors.grey[600],
-                  ))
-            ],
-          ),
-        ),
-        buildMonthlyData(monthlyNonValidatedSummary, 'not validated',
-            loadingNonValidated, nonValidatedFound),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'Validated Cost',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      fetchValidatedMonthly();
-                    });
-                  },
-                  icon: Icon(
-                    Icons.refresh_rounded,
-                    size: 20,
-                    color: Colors.grey[600],
-                  ))
-            ],
-          ),
-        ),
-        buildMonthlyData(monthlyValidatedSummary, 'validated', loadingValidated,
-            validatedFound),
-      ],
-    );
-  }
-
-  SingleChildScrollView buildReports(BuildContext context) {
+  buildReports(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -703,7 +538,7 @@ class _MainScreenState extends State<MainScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 15.0, bottom: 8),
             child: Text(
-              widget.assignedProject!,
+              widget.assignedProjects![0]['description'],
               style: TextStyle(fontSize: 13),
             ),
           ),
@@ -721,7 +556,7 @@ class _MainScreenState extends State<MainScreen> {
                 IconButton(
                     onPressed: () {
                       setState(() {
-                        fetchReleasedMonthly();
+                        fetchReleasedMonthly(monitoredProject);
                       });
                     },
                     icon: Icon(
@@ -739,7 +574,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Padding buildChart(BuildContext context) {
+  buildChart(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(GLOBAL_PADDING),
       child: Container(
@@ -897,8 +732,8 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget buildMonthlyData(List monthlySummary, String category,
-          bool loadingState, bool dataFound) =>
+  buildMonthlyData(List monthlySummary, String category, bool loadingState,
+          bool dataFound) =>
       Padding(
         padding: const EdgeInsets.all(GLOBAL_PADDING),
         child: Container(
@@ -940,13 +775,13 @@ class _MainScreenState extends State<MainScreen> {
                                         300]!)), // This will create top borders for the rest
                       ),
                       child: MonthlyTile(
-                        monthlyData: monthlyData,
-                        widget: widget,
-                        category: category,
-                        refreshMonthlySummary: refreshMontlySummaries,
-                        refreshValidated: fetchValidatedMonthly,
-                        refreshNonValidated: fetchNonValidatedMonthly,
-                      ),
+                          monthlyData: monthlyData,
+                          widget: widget,
+                          category: category,
+                          refreshMonthlySummary: refreshMontlySummaries,
+                          refreshValidated: fetchValidatedMonthly,
+                          refreshNonValidated: fetchNonValidatedMonthly,
+                          project: monitoredProject),
                     );
                   },
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -955,7 +790,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
-  Widget buildJobs(List<WorkData>? jobs) => ListView.builder(
+  buildJobs(List<WorkData>? jobs) => ListView.builder(
         itemBuilder: (context, index) {
           final job = jobs![index];
           return Padding(
@@ -967,7 +802,7 @@ class _MainScreenState extends State<MainScreen> {
         itemCount: jobs!.length,
       );
 
-  Card buildJobCard(WorkData job, BuildContext context) {
+  buildJobCard(WorkData job, BuildContext context) {
     return Card(
       child: ListTile(
           subtitle:
@@ -1331,19 +1166,13 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  SizedBox addVerticalSpace() {
+  addVerticalSpace() {
     return const SizedBox(
       height: 5,
     );
   }
 
-  Center buildSettings() {
-    return const Center(
-      child: Text('Settings'),
-    );
-  }
-
-  Widget buildFilters(showFilters) {
+  buildFilters(showFilters) {
     return showFilters == true
         ? Padding(
             padding: const EdgeInsets.all(8.0),
@@ -1514,6 +1343,513 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  buildRequests() {
+    return requests.isNotEmpty
+        ? ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(GLOBAL_PADDING),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat.yMMMMd()
+                                    .format(DateTime.parse(
+                                        requests[index].startDate))
+                                    .toString() +
+                                '-' +
+                                DateFormat.yMMMMd()
+                                    .format(
+                                        DateTime.parse(requests[index].endDate))
+                                    .toString(),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16.0),
+                          ),
+                        ],
+                      ),
+
+                      // Text(
+                      //   requests[index].referenceNumber,
+                      //   style: TextStyle(fontWeight: FontWeight.bold),
+                      // ),
+
+                      Text(
+                        requests[index].project,
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      SizedBox(
+                        height: 10.0,
+                      ),
+                      Text(
+                        'Equipment requested: ' +
+                            requests[index].equipmentType.description,
+                      ),
+                      Text(
+                        'Quantity requested: ' +
+                            requests[index].quantity.toString(),
+                      ),
+                      SizedBox(
+                        height: 10.0,
+                      ),
+                      Text(
+                        requests[index].status,
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: requests.length,
+          )
+        : Center(
+            child: CircularProgressIndicator(
+            strokeWidth: 2.0,
+          ));
+  }
+
+  //Selectors
+  buildProjectSelector(context) {
+    showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.grey[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
+        builder: (BuildContext bc) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+            child: ListSelector(
+              notifyParent: projectSelected,
+              context: context,
+              selectedItem: monitoredProject,
+              itemList: widget.assignedProjects
+                  ?.map((e) =>
+                      {'description': e['description'], 'id': e['description']})
+                  .toList(),
+            ),
+          );
+        });
+  }
+
+  buildShiftSelector(context) {
+    showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.grey[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
+        builder: (BuildContext bc) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+            child: Padding(
+              padding: const EdgeInsets.only(top: GLOBAL_PADDING),
+              child: Container(
+                // height: 1000.0,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    return Container(
+                        decoration: BoxDecoration(
+                          border: index == 0
+                              ? const Border() // This will create no border for the first item
+                              : Border(
+                                  top: BorderSide(
+                                      width: 1,
+                                      color: Colors.grey[
+                                          300]!)), // This will create top borders for the rest
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(GLOBAL_PADDING),
+                          child: GestureDetector(
+                              onTap: () => {
+                                    this.setState(() {
+                                      monitoredProject = shifts[index].id;
+                                    }),
+                                    refreshMontlySummaries(),
+                                    Navigator.pop(context)
+                                  },
+                              child: Text(shifts[index].description)),
+                        ));
+                  },
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: shifts.length,
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
+  // Screens
+  buildDashboard(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          buildTopNav(context),
+          buildFilters(showFilters),
+          buildDateRange(showDateRange, _onSelectionChanged),
+          widget.userType == 'revenue-admin' ||
+                  widget.userType == 'admin' ||
+                  widget.userType == 'display'
+              ? buildInfoTile(
+                  'Projected Revenues',
+                  const Icon(Icons.account_balance_wallet_rounded),
+                  '$projectedRevenue RWF',
+                  loadingProjectedRev)
+              : Container(
+                  child: null,
+                ),
+          widget.userType == 'revenue-admin' ||
+                  widget.userType == 'admin' ||
+                  widget.userType == 'display'
+              ? buildInfoTile(
+                  'Actual Revenues',
+                  const Icon(Icons.money, color: Colors.blue),
+                  "$actualRevenue RWF",
+                  loadingActualRev)
+              : Container(
+                  child: null,
+                ),
+          buildInfoTile(
+              'Asset Utilization',
+              const Icon(Icons.trending_up_outlined, color: Colors.green),
+              '$assetUtilization %',
+              loadingAssetUtilization),
+          buildInfoTile(
+              'Asset availability',
+              const Icon(Icons.event_available, color: Colors.orange),
+              '$assetAvailability %',
+              loadingAssetAvailability),
+          buildInfoTile(
+              'Average downtime',
+              const Icon(Icons.timer, color: Colors.red),
+              "$avgHours Hours",
+              loadingAvgDowntime),
+        ],
+      ),
+    );
+  }
+
+  buildJobList(BuildContext context) {
+    return Column(
+      children: [
+        buildTopNav(context),
+        Expanded(
+          child: forms!.isEmpty
+              ? Center(
+                  child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(loadingText),
+                    loadingText == 'No data found!'
+                        ? IconButton(
+                            icon: const Icon(Icons.refresh),
+                            color: Colors.orange,
+                            onPressed: refresh,
+                          )
+                        : const Text('')
+                  ],
+                ))
+              : buildJobs(forms),
+        ),
+      ],
+    );
+  }
+
+  buildApprovals(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildTopNav(context),
+        Padding(
+          padding: const EdgeInsets.only(left: 15.0, bottom: 8),
+          child: GestureDetector(
+            onTap: () => buildProjectSelector(context),
+            child: Text(
+              monitoredProject,
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Heading1(heading1: 'Cost to be validated'),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      fetchNonValidatedMonthly(monitoredProject);
+                    });
+                  },
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 20,
+                    color: Colors.grey[600],
+                  ))
+            ],
+          ),
+        ),
+        buildMonthlyData(monthlyNonValidatedSummary, 'not validated',
+            loadingNonValidated, nonValidatedFound),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Validated Cost',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      fetchValidatedMonthly(monitoredProject);
+                    });
+                  },
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 20,
+                    color: Colors.grey[600],
+                  ))
+            ],
+          ),
+        ),
+        buildMonthlyData(monthlyValidatedSummary, 'validated', loadingValidated,
+            validatedFound),
+      ],
+    );
+  }
+
+  buildSettings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildTopNav(context),
+        const Center(
+          child: Text('Settings'),
+        ),
+      ],
+    );
+  }
+
+  buildRequestsScreen(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(GLOBAL_PADDING),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildTopNav(context),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ElevatedButton(
+                    onPressed: () => {buildRequestForm(context)},
+                    child: Text('New Request')),
+                SizedBox(
+                  height: 20,
+                ),
+
+                // My requests
+                Heading1(
+                  heading1: 'My requests',
+                ),
+                SizedBox(
+                  height: 200,
+                  child: buildRequests(),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Heading1(
+                  heading1: 'Approved requests',
+                ),
+                // SizedBox(
+                //   child:
+                //   height: 550,
+                // )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  buildRequestForm(context) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.grey[100],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
+        builder: (BuildContext bc) {
+          var monitoredProject = '';
+          var selectedEquipmentType = '';
+          return BottomSheetForm(
+              monitoredProject: monitoredProject,
+              onSelectionChanged: _onSelectionChanged,
+              notifyProjectChange: projectSelected,
+              projectList: widget.assignedProjects,
+              equipmentList: equipmentTypes,
+              notifyEquipmentTypeChange: equipmentTypeSelected,
+              shiftList: shifts,
+              notifyShiftChange: shiftSelected,
+              notifyDateRangeChange: dateRangeChange,
+              notifySavedRequest: fetchRequests);
+        });
+  }
+
+  //Utils
+  void refreshMontlySummaries() {
+    fetchNonValidatedMonthly(monitoredProject);
+
+    fetchValidatedMonthly(monitoredProject);
+  }
+
+  void fetchNonValidatedMonthly(project) {
+    setState(() {
+      loadingText = 'Loading data...';
+      monthlyNonValidatedSummary = [];
+      loadingNonValidated = true;
+    });
+    WorkDatasApi.getNonValidatedSummary(project).then((value) => setState(() {
+          monthlyNonValidatedSummary = value;
+          loadingNonValidated = false;
+          if (value.isEmpty) {
+            loadingText = 'No data found!';
+            nonValidatedFound = false;
+          } else {
+            nonValidatedFound = true;
+          }
+        }));
+  }
+
+  void fetchReleasedMonthly(project) {
+    setState(() {
+      loadingText = 'Loading data...';
+      monthlyReleased = [];
+      loadingReleased = true;
+    });
+    WorkDatasApi.getMonthltReleased(project).then((value) => setState(() {
+          monthlyReleased = value;
+          loadingReleased = false;
+          if (value.isEmpty) {
+            loadingText = 'No data found!';
+            releasedFound = false;
+          } else {
+            releasedFound = true;
+          }
+        }));
+  }
+
+  void fetchValidatedMonthly(project) {
+    setState(() {
+      loadingText = 'Loading data...';
+      monthlyValidatedSummary = [];
+      loadingValidated = true;
+    });
+    WorkDatasApi.getValidatedSummary(project).then((value) => setState(() {
+          monthlyValidatedSummary = value;
+          loadingValidated = false;
+          if (value.isEmpty) {
+            loadingText = 'No data found!';
+            validatedFound = false;
+          } else {
+            validatedFound = true;
+          }
+        }));
+  }
+
+  void fetchRequests() {
+    setState(() {
+      loadingText = 'Loading data...';
+      requests = [];
+      loadingValidated = true;
+    });
+
+    RequestsApi.getRequestsSuggestions().then((value) => setState(() {
+          requests = value;
+        }));
+  }
+
+  void projectSelected(value) {
+    setState(() {
+      monitoredProject = value['description'];
+      refresh();
+    });
+  }
+
+  void equipmentTypeSelected(value) {
+    setState(() {
+      selectedEquipmentType = value;
+    });
+  }
+
+  void shiftSelected(value) {
+    setState(() {
+      selectedShift = value;
+    });
+  }
+
+  void dateRangeChange(startDate, endDate) {
+    setState(() {
+      _startDate = startDate;
+      _endDate = endDate;
+    });
+  }
+
+  void fetchEquipmentTypes() {
+    setState(() {
+      loadingText = 'Loading data...';
+      requests = [];
+      loadingValidated = true;
+    });
+
+    EquipmentTypesApi.getEquipmentTypes().then((value) => setState(() {
+          equipmentTypes = value;
+        }));
+  }
+}
+
+class Heading1 extends StatelessWidget {
+  const Heading1({
+    Key? key,
+    required this.heading1,
+  }) : super(key: key);
+
+  final String heading1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      heading1,
+      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 const COLOR_PRIMARY = Colors.black;
 const COLOR_ACCENT = Color.fromARGB(255, 252, 164, 32);
+const SECONDARY_COLOR = Color.fromARGB(255, 82, 142, 198);
+const COLOR_WHITE = Color.fromARGB(255, 255, 255, 255);
 
 ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,

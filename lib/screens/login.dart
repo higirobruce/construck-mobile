@@ -6,6 +6,7 @@ import 'package:mobile2/screens/success.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile2/utils/functions.dart';
+import 'dart:convert';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -51,9 +52,11 @@ class _LoginState extends State<Login> {
     String? _savedUsername = await storage.read(key: 'userName');
     String? _savedUserType = await storage.read(key: 'userType');
     String? _savedInitials = await storage.read(key: 'initials');
-    String? _savedAssignedProject = await storage.read(key: 'assignedProject');
-    List<dynamic>? _savedAssignedProjects =
-        (await storage.read(key: 'assignedProjects')) as List<dynamic>?;
+    String? _savedAssignedProjectsStr =
+        await storage.read(key: 'assignedProjects');
+
+    List<dynamic>? _savedAssignedProjects1 =
+        jsonDecode(_savedAssignedProjectsStr!);
 
     if (_savedId != null &&
         _savedUsername != null &&
@@ -63,10 +66,8 @@ class _LoginState extends State<Login> {
         _savedUsername.isNotEmpty &&
         _savedInitials != null &&
         _savedInitials.isNotEmpty &&
-        _savedAssignedProject != null &&
-        _savedAssignedProject.isNotEmpty &&
-        _savedAssignedProjects != null &&
-        _savedAssignedProjects.isNotEmpty) {
+        _savedAssignedProjects1 != null &&
+        _savedAssignedProjects1.isNotEmpty) {
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -76,8 +77,7 @@ class _LoginState extends State<Login> {
                 _savedUserId,
                 _savedUserType,
                 _savedInitials,
-                _savedAssignedProject,
-                _savedAssignedProjects),
+                _savedAssignedProjects1),
           ),
           (Route<dynamic> route) => route is Success);
     }
@@ -87,7 +87,7 @@ class _LoginState extends State<Login> {
     setState(() {
       submitting = true;
     });
-    String? _token = await getToken();
+    // String? _token = await getToken();
     UserApi.login(password, username).then(
       (value) async => {
         if (value['allowed'] == true)
@@ -109,13 +109,13 @@ class _LoginState extends State<Login> {
             await storage.write(key: 'initials', value: initials),
             await storage.write(key: 'assignedProject', value: assignedProject),
             await storage.write(
-                key: 'assignedProjects', value: assignedProjects.toString()),
+                key: 'assignedProjects', value: jsonEncode(assignedProjects)),
             // await UserApi.updateToken(_id, _token),
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
                   builder: (context) => MainScreen(_id, userName, userId,
-                      userType, initials, assignedProject, assignedProjects),
+                      userType, initials, assignedProjects),
                 ),
                 (Route<dynamic> route) => route is Success)
           }

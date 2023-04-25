@@ -1,7 +1,5 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 String? token = '';
 
@@ -56,7 +54,8 @@ Container buildDateRange(showDateRange, _onSelectionChanged) {
   return showDateRange == true
       ? Container(
           child: SfDateRangePicker(
-            view: DateRangePickerView.year,
+            view: DateRangePickerView.month,
+            viewSpacing: 1.0,
             selectionMode: DateRangePickerSelectionMode.range,
             onSelectionChanged: _onSelectionChanged,
           ),
@@ -80,28 +79,28 @@ handleNotifications() async {
   // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 }
 
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  // await Firebase.initializeApp();
-  // FirebaseMessaging messaging = FirebaseMessaging.instance;
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   // If you're going to use other Firebase services in the background, such as Firestore,
+//   // make sure you call `initializeApp` before using other Firebase services.
+//   await Firebase.initializeApp();
+//   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-  // NotificationSettings settings = await messaging.requestPermission(
-  //   alert: true,
-  //   announcement: false,
-  //   badge: true,
-  //   carPlay: false,
-  //   criticalAlert: false,
-  //   provisional: false,
-  //   sound: true,
-  // );
-  // print('User granted permission: ${settings.authorizationStatus}');
-  // token = await messaging.getToken(
-  //     vapidKey: "AIzaSyDUebe2JDnqvql7-D9lHcD-8rhgp6J1xVk");
+//   NotificationSettings settings = await messaging.requestPermission(
+//     alert: true,
+//     announcement: false,
+//     badge: true,
+//     carPlay: false,
+//     criticalAlert: false,
+//     provisional: false,
+//     sound: true,
+//   );
+//   print('User granted permission: ${settings.authorizationStatus}');
+//   token = await messaging.getToken(
+//       vapidKey: "AIzaSyDUebe2JDnqvql7-D9lHcD-8rhgp6J1xVk");
 
-  // print("Handling a background message: ${message.messageId}");
-}
+//   print("Handling a background message: ${message.messageId}");
+// }
 
 getToken() async {
   // await Firebase.initializeApp();

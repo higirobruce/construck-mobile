@@ -10,8 +10,8 @@ class AssetAvbltyApi {
     String encoded =
         stringToBase64.encode(credentials); // dXNlcm5hbWU6cGFzc3dvcmQ=
 
-    final url =
-        Uri.parse('http://localhost:9000/assetAvailability/getAnalytics');
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/assetAvailability/getAnalytics');
     final response = await http.post(url, body: {
       "startDate": startDate,
       "endDate": endDate,

@@ -11,9 +11,11 @@ String encoded = stringToBase64.encode(credentials);
 
 class WorkDatasApi {
   static Future<List<WorkData>> getWorkData(userId) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
-    final url = Uri.parse('http://localhost:9000/works/v3/driver/' + userId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/v3/driver/' +
+            userId);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -39,12 +41,13 @@ class WorkDatasApi {
   }
 
   static Future getValidatedSummary(projectName) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'http://localhost:9000/works/monthlyValidatedRevenues/' + projectName);
+        'https://construck-backend-playgroud.herokuapp.com/works/monthlyValidatedRevenues/' +
+            projectName);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -58,10 +61,10 @@ class WorkDatasApi {
   }
 
   static Future getNonValidatedSummary(projectName) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
     final url = Uri.parse(
-        'http://localhost:9000/works/monthlyNonValidatedRevenues/' +
+        'https://construck-backend-playgroud.herokuapp.com/works/monthlyNonValidatedRevenues/' +
             projectName);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -76,10 +79,10 @@ class WorkDatasApi {
   }
 
   static Future getDailyValidatedSummary(projectName, month, year) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
     final url = Uri.parse(
-        'http://localhost:9000/works/dailyValidatedRevenues/' +
+        'https://construck-backend-playgroud.herokuapp.com/works/dailyValidatedRevenues/' +
             projectName +
             '?month=' +
             month.toString() +
@@ -98,10 +101,10 @@ class WorkDatasApi {
   }
 
   static Future getDailyNonValidatedSummary(projectName, month, year) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
     final url = Uri.parse(
-        'http://localhost:9000/works/dailyNonValidatedRevenues/' +
+        'https://construck-backend-playgroud.herokuapp.com/works/dailyNonValidatedRevenues/' +
             projectName +
             '?month=' +
             month.toString() +
@@ -120,12 +123,13 @@ class WorkDatasApi {
   }
 
   static Future getDailyListValidated(projectName, transactionDate) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
-    final url = Uri.parse('http://localhost:9000/works/validatedByDay/' +
-        projectName +
-        '?transactionDate=' +
-        transactionDate);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/validatedByDay/' +
+            projectName +
+            '?transactionDate=' +
+            transactionDate);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -139,12 +143,13 @@ class WorkDatasApi {
   }
 
   static Future getDailyListNonValidated(projectName, transactionDate) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
-    final url = Uri.parse('http://localhost:9000/works/nonValidatedByDay/' +
-        projectName +
-        '?transactionDate=' +
-        transactionDate);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/nonValidatedByDay/' +
+            projectName +
+            '?transactionDate=' +
+            transactionDate);
 
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -159,10 +164,11 @@ class WorkDatasApi {
   }
 
   static Future getMonthltReleased(projectName) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
     final url = Uri.parse(
-        'http://localhost:9000/projects/releasedRevenue/' + projectName);
+        'https://construck-backend-playgroud.herokuapp.com/projects/releasedRevenue/' +
+            projectName);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -187,9 +193,10 @@ class WorkDatasApi {
       DateTime start,
       DateTime end,
       String sitework) async {
-    // final url = Uri.parse('http://localhost:9000/works');
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works');
 
-    final url = Uri.parse('http://localhost:9000/works/mobileData');
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/mobileData');
     final response = await http.post(url, body: {
       "project": jsonEncode(project),
       "equipment": jsonEncode(equipment),
@@ -215,9 +222,11 @@ class WorkDatasApi {
 
   static Future<bool> startJob(String jobId, String startIndex,
       String startedBy, String postingDate) async {
-    // final url = Uri.parse('http://localhost:9000/works/start/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
 
-    final url = Uri.parse('http://localhost:9000/works/start/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/start/' +
+            jobId);
     final response = await http.put(url, body: {
       "startIndex": startIndex,
       "startedBy": startedBy,
@@ -241,8 +250,10 @@ class WorkDatasApi {
       String comment,
       String stoppedBy,
       String postingDate) async {
-    // final url = Uri.parse('http://localhost:9000/works/stop/' + jobId);
-    final url = Uri.parse('http://localhost:9000/works/stop/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/stop/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/stop/' +
+            jobId);
     final response = await http.put(url, body: {
       "endIndex": endIndex,
       "duration": duration == "" ? "5" : duration,
@@ -262,13 +273,14 @@ class WorkDatasApi {
   }
 
   static Future<bool> releaseMonthlyCost(projectName, month, year) async {
-    // final url = Uri.parse('http://localhost:9000/works/stop/' + jobId);
-    final url = Uri.parse('http://localhost:9000/works/releaseValidated/' +
-        projectName +
-        '?month=' +
-        month.toString() +
-        '&year=' +
-        year.toString());
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/stop/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/releaseValidated/' +
+            projectName +
+            '?month=' +
+            month.toString() +
+            '&year=' +
+            year.toString());
     final response =
         await http.put(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -281,13 +293,14 @@ class WorkDatasApi {
 
   static Future<bool> rejectMonthlyCost(
       projectName, month, year, reason) async {
-    // final url = Uri.parse('http://localhost:9000/works/stop/' + jobId);
-    final url = Uri.parse('http://localhost:9000/works/releaseValidated/' +
-        projectName +
-        '?month=' +
-        month.toString() +
-        '&year=' +
-        year.toString());
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/stop/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/releaseValidated/' +
+            projectName +
+            '?month=' +
+            month.toString() +
+            '&year=' +
+            year.toString());
     final response = await http.put(url,
         headers: {"Authorization": 'Basic ' + encoded},
         body: {"reason": reason});
@@ -300,9 +313,11 @@ class WorkDatasApi {
   }
 
   static Future<bool> approve(String jobId) async {
-    // final url = Uri.parse('http://localhost:9000/works/start/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
 
-    final url = Uri.parse('http://localhost:9000/works/approve/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/approve/' +
+            jobId);
     final response =
         await http.put(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -314,9 +329,11 @@ class WorkDatasApi {
   }
 
   static Future<bool> reject(String jobId, reason) async {
-    // final url = Uri.parse('http://localhost:9000/works/start/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
 
-    final url = Uri.parse('http://localhost:9000/works/reject/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/reject/' +
+            jobId);
     final response = await http.put(url,
         headers: {"Authorization": 'Basic ' + encoded},
         body: {"reasonForRejection": reason});
@@ -334,10 +351,11 @@ class WorkDatasApi {
       String approvedRevenue,
       String approvedDuration,
       String approvedExpenditure) async {
-    // final url = Uri.parse('http://localhost:9000/works/start/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
 
-    final url =
-        Uri.parse('http://localhost:9000/works/approveDailyWork/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/approveDailyWork/' +
+            jobId);
     final response = await http.put(url, headers: {
       "Authorization": 'Basic ' + encoded
     }, body: {
@@ -362,10 +380,11 @@ class WorkDatasApi {
       String rejectedDuration,
       String rejectedExpenditure,
       String reason) async {
-    // final url = Uri.parse('http://localhost:9000/works/start/' + jobId);
+    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/works/start/' + jobId);
 
-    final url =
-        Uri.parse('http://localhost:9000/works/rejectDailyWork/' + jobId);
+    final url = Uri.parse(
+        'https://construck-backend-playgroud.herokuapp.com/works/rejectDailyWork/' +
+            jobId);
     final response = await http.put(url, headers: {
       "Authorization": 'Basic ' + encoded
     }, body: {
@@ -416,7 +435,7 @@ class WorkData {
       required this.shift});
 
   static WorkData fromJson(Map<String, dynamic> json) => WorkData(
-      workDone: WorkDone?.fromJson(json['workDone']),
+      workDone: WorkDone.fromJson(json['workDone']),
       jobId: json['_id'],
       status: json['status'],
       targetTrips: json['targetTrips'],

@@ -18,13 +18,15 @@ class MonthlyTile extends StatefulWidget {
     required this.refreshMonthlySummary,
     required this.refreshValidated,
     required this.refreshNonValidated,
+    required this.project,
   }) : super(key: key);
 
   final monthlyData;
   final category;
-  final VoidCallback refreshMonthlySummary;
-  final VoidCallback refreshValidated;
-  final VoidCallback refreshNonValidated;
+  final project;
+  final Function refreshMonthlySummary;
+  final Function refreshValidated;
+  final Function refreshNonValidated;
   final MainScreen widget;
 
   @override
@@ -236,7 +238,7 @@ class _MonthlyTileState extends State<MonthlyTile> {
                                   onTap: () => {
                                     releaseModalBottomSheet(
                                       context,
-                                      widget.widget.assignedProject,
+                                      widget.project,
                                       widget.monthlyData['id']['month'],
                                       widget.monthlyData['id']['year'],
                                     )
@@ -285,7 +287,7 @@ class _MonthlyTileState extends State<MonthlyTile> {
                                   onTap: () => {
                                     rejectModalBottomSheet(
                                       context,
-                                      widget.widget.assignedProject,
+                                      widget.project,
                                       widget.monthlyData['id']['month'],
                                       widget.monthlyData['id']['year'],
                                     )
@@ -313,9 +315,9 @@ class _MonthlyTileState extends State<MonthlyTile> {
                                   builder: (context) => DailySummary(
                                       widget.monthlyData['id']['month'],
                                       widget.monthlyData['id']['year'],
-                                      widget.widget.assignedProject,
+                                      widget.project,
                                       widget.category,
-                                      widget.refreshMonthlySummary),
+                                      () => widget.refreshMonthlySummary()),
                                 ),
                               ),
                             },
