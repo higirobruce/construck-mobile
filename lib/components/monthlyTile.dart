@@ -93,7 +93,6 @@ class _MonthlyTileState extends State<MonthlyTile> {
                           Navigator.pop(context);
                         } else {
                           _reasonController.text = 'No reason was given!';
-                          print('You cn not');
                         }
                       },
                       child: Text('Confirm'),

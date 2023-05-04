@@ -81,7 +81,6 @@ class _DailyTileState extends State<DailyTile> {
                           Navigator.pop(context);
                         } else {
                           _reasonController.text = 'No reason was given!';
-                          print('You cn not');
                         }
                       },
                       child: Text('Confirm'),
@@ -133,7 +132,6 @@ class _DailyTileState extends State<DailyTile> {
 
   void approveDailyWork(dailyData) {
     if (dailyData['siteWork'] == true) {
-      print(dailyData['dailyWork']['totalRevenue']);
       setState(() {
         approving = true;
       });
@@ -144,7 +142,6 @@ class _DailyTileState extends State<DailyTile> {
               dailyData['dailyWork']['duration'].toString(),
               dailyData['dailyWork']['totalExpenditure'].toString())
           .then((value) => {
-                print(value),
                 widget.refresh(),
                 setState(() => {
                       widget.dailyData['status'] = 'approved',
@@ -165,7 +162,6 @@ class _DailyTileState extends State<DailyTile> {
 
   void rejectDailyWork(dailyData, reason) {
     if (dailyData['siteWork'] == true) {
-      print(dailyData['dailyWork']['totalRevenue']);
       setState(() {
         rejecting = true;
       });
@@ -177,7 +173,6 @@ class _DailyTileState extends State<DailyTile> {
               dailyData['dailyWork']['totalExpenditure'].toString(),
               reason)
           .then((value) => {
-                print(value),
                 setState(() => {
                       widget.dailyData['status'] = 'approved',
                       rejecting = false
@@ -188,7 +183,6 @@ class _DailyTileState extends State<DailyTile> {
         rejecting = true;
       });
       WorkDatasApi.reject(dailyData['_id'], reason).then((value) => {
-            print(value.toString()),
             setState(() =>
                 {widget.dailyData['status'] = 'approved', rejecting = false})
           });
@@ -232,11 +226,14 @@ class _DailyTileState extends State<DailyTile> {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey[500])),
-              Text(plateNumber + '-' + eqType,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[700])),
+              SizedBox(
+                width: 250,
+                child: Text(plateNumber + '-' + eqType,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700])),
+              ),
               Text(shift,
                   style: TextStyle(
                       fontSize: 11,

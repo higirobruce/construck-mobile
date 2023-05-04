@@ -10,14 +10,16 @@ const double HORIZONTAL_PADDING = 15.0;
 const double BORDER_SIZE = 12;
 
 class CustomTextField extends StatelessWidget {
-  const CustomTextField({
-    Key? key,
-    required this.valueController,
-    required this.iconData,
-  }) : super(key: key);
+  const CustomTextField(
+      {Key? key,
+      required this.valueController,
+      required this.iconData,
+      required this.inputType})
+      : super(key: key);
 
   final TextEditingController valueController;
   final IconData iconData;
+  final TextInputType inputType;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class CustomTextField extends StatelessWidget {
             ),
           ),
           controller: valueController,
-          keyboardType: TextInputType.number,
+          keyboardType: inputType,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Can not be empty';

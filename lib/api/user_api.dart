@@ -35,14 +35,12 @@ class UserApi {
 
     if (response.statusCode == 200) {
       final obj = json.decode(response.body);
-      print(obj['message']);
       return {
         "allowed": true,
         "employee": obj['employee'],
         "userType": obj['userType']
       };
     } else {
-      print(response.statusCode);
       return {"allowed": false};
     }
   }
@@ -52,7 +50,6 @@ class UserApi {
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
-    print(token);
     final url = Uri.parse(
         'https://construck-backend-playgroud.herokuapp.com/employees/token/' +
             userId);

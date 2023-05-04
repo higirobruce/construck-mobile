@@ -66,6 +66,7 @@ class _MainScreenState extends State<MainScreen> {
   final TextEditingController _startIndex = TextEditingController();
   final TextEditingController _endIndex = TextEditingController();
   final TextEditingController? _duration = TextEditingController();
+  final TextEditingController? _durationMinutes = TextEditingController();
   final TextEditingController _tripsDone = TextEditingController();
   final TextEditingController _hours = TextEditingController();
   final TextEditingController _searchCustomerCntrl = TextEditingController();
@@ -82,7 +83,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Equipment lowbed = const Equipment(
       equipmentId: '', plateNumber: '', eqDescription: '', eqType: '');
-  WorkDone workDone = const WorkDone(jobDescription: '', jobId: '');
+  WorkDone workDone =
+      const WorkDone(jobDescription: '', jobId: '', id: '', description: '');
   User driver = const User(firstName: '', lastName: '', userId: '');
   User lowbedDriver = const User(firstName: '', lastName: '', userId: '');
   Reason reason =
@@ -95,10 +97,12 @@ class _MainScreenState extends State<MainScreen> {
   bool loadingAvgDowntime = true;
   bool loadingAssetUtilization = true;
   bool loadingAssetAvailability = true;
+  bool loadingRequests = true;
   bool? dayShift = true;
   bool? machineDispatch = false;
   bool? siteWork = false;
   bool durationIsLess = false;
+  bool durationMinutesIsLess = false;
   bool tripsAreLess = false;
   bool showDateRange = false;
   bool showFilters = false;
@@ -133,6 +137,7 @@ class _MainScreenState extends State<MainScreen> {
   bool loadingValidated = false;
   bool loadingNonValidated = false;
   bool loadingReleased = false;
+  bool loadingWorkList = false;
 
   String _selectedDate = '';
   String _dateCount = '';
@@ -147,15 +152,20 @@ class _MainScreenState extends State<MainScreen> {
   String monitoredProject = '';
   String selectedEquipmentType = '';
   String selectedShift = '';
+  String selectedRequest = '';
 
   String? _selectedOwner = 'All';
 
   List<EquipmentRequest> requests = [];
+  List<EquipmentRequest> approvedRequests = [];
+  List<RequestSummary> aggregatedRequests = [];
   List<EquipmentType> equipmentTypes = [];
   List<ShiftType> shifts = [
     ShiftType(description: 'Day shift', id: 'dayShift'),
     ShiftType(description: 'Nigt shift', id: 'nightShift'),
   ].toList();
+
+  List<WorkDone> workList = [];
 
   getCurrentDate() {
     final now = DateTime.now();
@@ -309,6 +319,9 @@ class _MainScreenState extends State<MainScreen> {
 
     fetchEquipmentTypes();
 
+    fetchAggregatedRequests();
+
+    fetchWorkList();
     // handleNotifications();
 
     setState(() {
@@ -344,6 +357,13 @@ class _MainScreenState extends State<MainScreen> {
       ];
     else if (widget.userType == 'customer-project-manager')
       screens = [
+        buildApprovals(context),
+        buildReports(context),
+        buildSettings(),
+      ];
+    else if (widget.userType == 'logistic-officer')
+      screens = [
+        buildRequestsScreen(context),
         buildApprovals(context),
         buildReports(context),
         buildSettings(),
@@ -459,6 +479,14 @@ class _MainScreenState extends State<MainScreen> {
         bottomNavReports,
         bottomNavSettings,
       ];
+    else if (widget.userType == "logistic-officer")
+      items = [
+        bottomNavRequests,
+        bottomNavRevApprovals,
+        // bottomNavigationBarItem2,
+        bottomNavReports,
+        bottomNavSettings,
+      ];
     else
       items = [
         bottomNavDispatches,
@@ -503,7 +531,8 @@ class _MainScreenState extends State<MainScreen> {
                 plateNumber: '',
                 eqDescription: '',
                 eqType: '');
-            workDone = const WorkDone(jobDescription: '', jobId: '');
+            workDone = const WorkDone(
+                jobDescription: '', jobId: '', id: '', description: '');
             driver = const User(firstName: '', lastName: '', userId: '');
             lowbedDriver = const User(firstName: '', lastName: '', userId: '');
             reason =
@@ -738,15 +767,16 @@ class _MainScreenState extends State<MainScreen> {
         padding: const EdgeInsets.all(GLOBAL_PADDING),
         child: Container(
           decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 2.0,
-                )
-              ]),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Colors.black12,
+            //     blurRadius: 2.0,
+            //   )
+            // ],
+          ),
           padding: EdgeInsets.symmetric(
               horizontal: GLOBAL_PADDING, vertical: GLOBAL_PADDING - 5),
           child: loadingState == true
@@ -760,33 +790,35 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    final monthlyData = monthlySummary[index];
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: index == 0
-                            ? const Border() // This will create no border for the first item
-                            : Border(
-                                top: BorderSide(
-                                    width: 1,
-                                    color: Colors.grey[
-                                        300]!)), // This will create top borders for the rest
-                      ),
-                      child: MonthlyTile(
-                          monthlyData: monthlyData,
-                          widget: widget,
-                          category: category,
-                          refreshMonthlySummary: refreshMontlySummaries,
-                          refreshValidated: fetchValidatedMonthly,
-                          refreshNonValidated: fetchNonValidatedMonthly,
-                          project: monitoredProject),
-                    );
-                  },
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: monthlySummary.length,
-                ),
+              : monthlySummary.isNotEmpty
+                  ? ListView.builder(
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        final monthlyData = monthlySummary[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: index == 0
+                                ? const Border() // This will create no border for the first item
+                                : Border(
+                                    top: BorderSide(
+                                        width: 1,
+                                        color: Colors.grey[
+                                            300]!)), // This will create top borders for the rest
+                          ),
+                          child: MonthlyTile(
+                              monthlyData: monthlyData,
+                              widget: widget,
+                              category: category,
+                              refreshMonthlySummary: refreshMontlySummaries,
+                              refreshValidated: fetchValidatedMonthly,
+                              refreshNonValidated: fetchNonValidatedMonthly,
+                              project: monitoredProject),
+                        );
+                      },
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: monthlySummary.length,
+                    )
+                  : Text('Nothing to show'),
         ),
       );
 
@@ -829,13 +861,24 @@ class _MainScreenState extends State<MainScreen> {
             Text(job.workDone!.jobDescription),
             addVerticalSpace(),
             if (job.equipment!.eqType == 'Truck')
-              Text(
-                'Target trips: ' + job.targetTrips,
-                style: const TextStyle(
-                  color: Color.fromARGB(135, 20, 20, 20),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Target trips: ' + job.targetTrips,
+                    style: const TextStyle(
+                      color: Color.fromARGB(135, 20, 20, 20),
+                    ),
+                  ),
+                  Text(
+                    'Trips done: ' + job.tripsDone.toString(),
+                    style: const TextStyle(
+                      color: Color.fromARGB(135, 20, 20, 20),
+                    ),
+                  ),
+                ],
               ),
-            addVerticalSpace(),
+            if (job.status == 'stopped') Text(job.duration.toString()),
           ]),
           trailing: job.status == 'in progress'
               ? IconButton(
@@ -872,6 +915,7 @@ class _MainScreenState extends State<MainScreen> {
                                               return null;
                                             },
                                           ),
+
                                           TextFormField(
                                             controller: _duration,
                                             inputFormatters: const [
@@ -907,6 +951,49 @@ class _MainScreenState extends State<MainScreen> {
                                               return null;
                                             },
                                           ),
+                                          TextFormField(
+                                            controller: _durationMinutes,
+                                            inputFormatters: const [
+                                              //only numeric keyboard.
+                                              // LengthLimitingTextInputFormatter(
+                                              //     3), //only 6 digit
+                                              // WhitelistingTextInputFormatter.digitsOnly
+                                            ],
+                                            onChanged: (value) {
+                                              if (value.isNotEmpty &&
+                                                  double.parse(value) < 5) {
+                                                setState(
+                                                  () => {
+                                                    durationMinutesIsLess = true
+                                                  },
+                                                );
+                                              } else {
+                                                setState(
+                                                  () => {
+                                                    durationMinutesIsLess =
+                                                        false,
+                                                  },
+                                                );
+                                              }
+                                            },
+                                            keyboardType: TextInputType.number,
+                                            decoration: const InputDecoration(
+                                              hintText:
+                                                  'Iminota irenga ku masaha',
+                                              prefixIcon: Icon(Icons.timelapse),
+                                            ),
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Andika iminota irenga ku masaha';
+                                              }
+                                              if (double.parse(value) > 59.0) {
+                                                return 'Iminota ntiyarenga 59';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
                                           if (job.targetTrips != "N/A")
                                             TextFormField(
                                               controller: _tripsDone,
@@ -1028,7 +1115,13 @@ class _MainScreenState extends State<MainScreen> {
                                             WorkDatasApi.endJob(
                                                     job.jobId,
                                                     _endIndex.text,
-                                                    _duration!.text,
+                                                    (double.parse(_duration!
+                                                                .text) +
+                                                            double.parse(
+                                                                    _durationMinutes!
+                                                                        .text) /
+                                                                60)
+                                                        .toStringAsFixed(2),
                                                     _tripsDone.text,
                                                     durationIsLess ||
                                                             tripsAreLess
@@ -1352,6 +1445,229 @@ class _MainScreenState extends State<MainScreen> {
             shrinkWrap: true,
             scrollDirection: Axis.horizontal,
             itemBuilder: (context, index) {
+              var requestCardProperties = [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      DateFormat.yMMMMd()
+                              .format(DateTime.parse(requests[index].startDate))
+                              .toString() +
+                          '-' +
+                          DateFormat.yMMMMd()
+                              .format(DateTime.parse(requests[index].endDate))
+                              .toString(),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16.0),
+                    ),
+                  ],
+                ),
+
+                // Text(
+                //   requests[index].referenceNumber,
+                //   style: TextStyle(fontWeight: FontWeight.bold),
+                // ),
+
+                Text(
+                  requests[index].project,
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+
+                Text(
+                  'For: ' + requests[index].workToBeDone['jobDescription'],
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+
+                buildRequestTrips(index, requests),
+                SizedBox(
+                  height: 10.0,
+                ),
+
+                buildRequestFromTo(index, requests),
+                Text(
+                  'Equipment requested: ' +
+                      requests[index].equipmentType.description,
+                ),
+                Text(
+                  'Quantity requested: ' + requests[index].quantity.toString(),
+                ),
+                SizedBox(
+                  height: 10.0,
+                ),
+                Chip(
+                  // avatar: CircleAvatar(
+                  //   backgroundColor: Colors.grey.shade800,
+                  //   child: const Text('1'),
+                  // ),
+                  backgroundColor: Colors.orange,
+
+                  label: const Text(
+                    'pending',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
+              ];
+              return Card(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: 200),
+                  child: Padding(
+                    padding: const EdgeInsets.all(GLOBAL_PADDING),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: requestCardProperties,
+                    ),
+                  ),
+                ),
+              );
+            },
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: requests.length,
+          )
+        : loadingRequests
+            ? Center(
+                child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+              ))
+            : Container();
+  }
+
+  Widget buildRequestFromTo(int index, List requests) {
+    if ((requests[index].tripFrom.toString().isNotEmpty &&
+            requests[index].tripFrom.toString() != 'null') ||
+        ((requests[index].tripTo.toString().isNotEmpty &&
+            requests[index].tripTo.toString() != 'null'))) {
+      return Text(
+        requests[index].tripFrom + ' to ' + requests[index].tripTo,
+        style: TextStyle(fontWeight: FontWeight.bold),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  Widget buildRequestTrips(int index, List requests) {
+    if (requests[index].tripsToBeMade.toString().isNotEmpty &&
+        requests[index].tripsToBeMade.toString() != 'null') {
+      return Text(
+        'Trips be made: ' + requests[index].tripsToBeMade.toString(),
+        style: TextStyle(fontWeight: FontWeight.w600),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  buildApprovedRequests() {
+    return approvedRequests.isNotEmpty
+        ? ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
+              return Card(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: 200),
+                  child: Padding(
+                    padding: const EdgeInsets.all(GLOBAL_PADDING),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              DateFormat.yMMMMd()
+                                      .format(DateTime.parse(
+                                          approvedRequests[index].startDate))
+                                      .toString() +
+                                  '-' +
+                                  DateFormat.yMMMMd()
+                                      .format(DateTime.parse(
+                                          approvedRequests[index].endDate))
+                                      .toString(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16.0),
+                            ),
+                          ],
+                        ),
+
+                        // Text(
+                        //   requests[index].referenceNumber,
+                        //   style: TextStyle(fontWeight: FontWeight.bold),
+                        // ),
+
+                        Text(
+                          approvedRequests[index].project,
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+
+                        Text(
+                          'For: ' +
+                              approvedRequests[index]
+                                  .workToBeDone['jobDescription'],
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+
+                        buildRequestTrips(index, approvedRequests),
+                        SizedBox(
+                          height: 10.0,
+                        ),
+
+                        buildRequestFromTo(index, approvedRequests),
+
+                        Text(
+                          'Equipment requested: ' +
+                              approvedRequests[index].equipmentType.description,
+                        ),
+                        Text(
+                          'Quantity requested: ' +
+                              approvedRequests[index].quantity.toString(),
+                        ),
+
+                        SizedBox(
+                          height: 10.0,
+                        ),
+                        // Text(
+                        //   approvedRequests[index].status,
+                        //   style: TextStyle(color: Colors.black54),
+                        // ),
+                        Expanded(
+                          child: Chip(
+                            avatar: CircleAvatar(
+                              backgroundColor: Colors.grey.shade100,
+                              child: Text(approvedRequests[index]
+                                  .approvedQuantity
+                                  .toString()),
+                            ),
+                            backgroundColor: Colors.lightBlue,
+                            label: const Text(
+                              'approved',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: approvedRequests.length,
+          )
+        : loadingRequests
+            ? Center(
+                child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+              ))
+            : Container();
+  }
+
+  buildAggregatedRequests() {
+    return requests.isNotEmpty
+        ? ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
               return Card(
                 child: Padding(
                   padding: const EdgeInsets.all(GLOBAL_PADDING),
@@ -1360,21 +1676,7 @@ class _MainScreenState extends State<MainScreen> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            DateFormat.yMMMMd()
-                                    .format(DateTime.parse(
-                                        requests[index].startDate))
-                                    .toString() +
-                                '-' +
-                                DateFormat.yMMMMd()
-                                    .format(
-                                        DateTime.parse(requests[index].endDate))
-                                    .toString(),
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16.0),
-                          ),
-                        ],
+                        children: [],
                       ),
 
                       // Text(
@@ -1400,10 +1702,40 @@ class _MainScreenState extends State<MainScreen> {
                       SizedBox(
                         height: 10.0,
                       ),
+
                       Text(
-                        requests[index].status,
-                        style: TextStyle(color: Colors.black54),
+                        DateFormat.yMMMMd()
+                            .format(DateTime.parse(requests[index].startDate))
+                            .toString(),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16.0),
                       ),
+
+                      SizedBox(
+                        height: 10.0,
+                      ),
+                      requests[index].status == 'pending'
+                          ? ElevatedButton(
+                              onPressed: () => {
+                                    setState(() {
+                                      selectedRequest = requests[index].id;
+                                    }),
+                                    buildRequestApprovalForm(context)
+                                  },
+                              child: Text('Assign quantity and approve'))
+                          : Chip(
+                              avatar: CircleAvatar(
+                                backgroundColor: Colors.grey.shade100,
+                                child: Text(requests[index]
+                                    .approvedQuantity
+                                    .toString()),
+                              ),
+                              backgroundColor: Colors.lightBlue,
+                              label: const Text(
+                                'approved',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -1412,10 +1744,12 @@ class _MainScreenState extends State<MainScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             itemCount: requests.length,
           )
-        : Center(
-            child: CircularProgressIndicator(
-            strokeWidth: 2.0,
-          ));
+        : loadingRequests
+            ? Center(
+                child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+              ))
+            : Container();
   }
 
   //Selectors
@@ -1661,35 +1995,95 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           buildTopNav(context),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ElevatedButton(
-                    onPressed: () => {buildRequestForm(context)},
-                    child: Text('New Request')),
-                SizedBox(
-                  height: 20,
-                ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.userType != 'logistic-officer'
+                    ? [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ElevatedButton(
+                                onPressed: () => {buildRequestForm(context)},
+                                child: Text('New Request')),
+                            IconButton(
+                              icon: Icon(Icons.loop),
+                              onPressed: () => fetchRequests(),
+                            )
+                          ],
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
 
-                // My requests
-                Heading1(
-                  heading1: 'My requests',
-                ),
-                SizedBox(
-                  height: 200,
-                  child: buildRequests(),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                Heading1(
-                  heading1: 'Approved requests',
-                ),
-                // SizedBox(
-                //   child:
-                //   height: 550,
-                // )
-              ],
+                        // My requests
+                        Heading1(
+                          heading1: 'My requests',
+                        ),
+                        SizedBox(
+                          height: 250,
+                          child: buildRequests(),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Heading1(
+                          heading1: 'Approved requests',
+                        ),
+                        SizedBox(
+                          height: 250,
+                          child: buildApprovedRequests(),
+                        )
+                        // SizedBox(
+                        //   child:
+                        //   height: 550,
+                        // )
+                      ]
+                    : [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(),
+                            IconButton(
+                              icon: Icon(Icons.loop),
+                              onPressed: () => fetchRequests(),
+                            )
+                          ],
+                        ),
+                        // My requests
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Heading1(
+                            heading1: 'Pending Requests',
+                          ),
+                        ),
+
+                        SizedBox(
+                          height: 200,
+                          child: buildAggregatedRequests(),
+                        ),
+
+                        SizedBox(
+                          height: GLOBAL_PADDING * 2,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Heading1(
+                            heading1: 'Approved Requests',
+                          ),
+                        ),
+
+                        SizedBox(
+                          height: 250,
+                          child: buildApprovedRequests(),
+                        )
+
+                        // SizedBox(
+                        //   child:
+                        //   height: 550,
+                        // )
+                      ],
+              ),
             ),
           )
         ],
@@ -1721,7 +2115,73 @@ class _MainScreenState extends State<MainScreen> {
               shiftList: shifts,
               notifyShiftChange: shiftSelected,
               notifyDateRangeChange: dateRangeChange,
-              notifySavedRequest: fetchRequests);
+              notifySavedRequest: fetchRequests,
+              owner: widget._id,
+              workList: workList);
+        });
+  }
+
+  buildRequestApprovalForm(context) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.grey[100],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
+        builder: (BuildContext bc) {
+          return FractionallySizedBox(
+            heightFactor: 0.6,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+              child: Padding(
+                padding: const EdgeInsets.only(top: GLOBAL_PADDING),
+                child: Container(
+                  height: 2000.0,
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CustomTextLabel(lable: 'Quantity'),
+                        CustomTextField(
+                          valueController: quantityController,
+                          iconData: Icons.file_copy,
+                          inputType: TextInputType.number,
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: 1,
+                          child: ElevatedButton(
+                              onPressed: () => {
+                                    Navigator.pop(context),
+                                    loadingRequests = true,
+                                    RequestsApi.assignQuantity(selectedRequest,
+                                            quantityController.text)
+                                        .then((value) => {
+                                              fetchRequests(),
+                                              quantityController.text = ''
+                                            })
+                                  },
+                              child: submitting
+                                  ? SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.0,
+                                        color: COLOR_WHITE,
+                                      ),
+                                    )
+                                  : Text('Assign and approve quantity')),
+                        ),
+                      ]),
+                ),
+              ),
+            ),
+          );
         });
   }
 
@@ -1789,12 +2249,57 @@ class _MainScreenState extends State<MainScreen> {
   void fetchRequests() {
     setState(() {
       loadingText = 'Loading data...';
+      loadingRequests = true;
       requests = [];
+      approvedRequests = [];
       loadingValidated = true;
     });
 
-    RequestsApi.getRequestsSuggestions().then((value) => setState(() {
-          requests = value;
+    if (widget.userType == 'customer-site-manager' ||
+        widget.userType == 'customer-project-manager') {
+      RequestsApi.getMyRequests(widget._id).then((value) => setState(() {
+            requests =
+                value.where((element) => element.status == 'pending').toList();
+            loadingRequests = false;
+            approvedRequests =
+                value.where((element) => element.status == 'approved').toList();
+          }));
+    } else {
+      RequestsApi.getRequestsSuggestions().then((value) => setState(() {
+            requests =
+                value.where((element) => element.status == 'pending').toList();
+            loadingRequests = false;
+            approvedRequests =
+                value.where((element) => element.status == 'approved').toList();
+          }));
+    }
+  }
+
+  void fetchWorkList() {
+    setState(() {
+      loadingText = 'Loading data...';
+      loadingWorkList = true;
+      workList = [];
+    });
+
+    WorkDoneApi.getWorkTypeList().then((value) => setState(() {
+          workList = value.toList();
+          loadingWorkList = false;
+        }));
+  }
+
+  void fetchAggregatedRequests() {
+    setState(() {
+      loadingText = 'Loading data...';
+      loadingRequests = true;
+      requests = [];
+      approvedRequests = [];
+      loadingValidated = true;
+    });
+
+    RequestsApi.getAggregatedRequests('pending').then((value) => setState(() {
+          loadingRequests = false;
+          aggregatedRequests = value.toList();
         }));
   }
 
@@ -1849,7 +2354,7 @@ class Heading1 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       heading1,
-      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:mobile2/api/equipmentTypes.dart';
 import 'package:mobile2/api/requests_api.dart';
+import 'package:mobile2/api/workDone_api.dart';
 import 'package:mobile2/components/bottomSheetDataSelector.dart';
 import 'package:mobile2/components/customTextField.dart';
 import 'package:mobile2/screens/login.dart';
@@ -28,6 +29,8 @@ class BottomSheetForm extends StatefulWidget {
   final List<EquipmentType> equipmentList;
   final notifySavedRequest;
   final List<ShiftType> shiftList;
+  final owner;
+  final List<WorkDone> workList;
 
   const BottomSheetForm(
       {Key? key,
@@ -40,7 +43,9 @@ class BottomSheetForm extends StatefulWidget {
       required this.shiftList,
       required this.notifyShiftChange,
       required this.notifyDateRangeChange,
-      required this.notifySavedRequest})
+      required this.notifySavedRequest,
+      required this.owner,
+      required this.workList})
       : super(key: key);
 
   @override
@@ -48,11 +53,17 @@ class BottomSheetForm extends StatefulWidget {
 }
 
 class _BottomSheetFormState extends State<BottomSheetForm> {
+  final requestFormKey = GlobalKey<FormState>();
   TextEditingController quantityController = TextEditingController();
+  TextEditingController tripsController = TextEditingController();
   TextEditingController nozaPRNumberController = TextEditingController();
+  TextEditingController tripFrom = TextEditingController();
+  TextEditingController tripTo = TextEditingController();
   dynamic selectedProject = {'description': '', 'id': ''};
   dynamic selectedEquipmentType = {'description': '', 'id': ''};
   dynamic selectedShift = {'description': '', 'id': ''};
+  dynamic selectedWork = {'description': '', 'id': ''};
+
   var showDateRange = false;
   var submitting = false;
   String _startDate = "2022-08-01";
@@ -80,9 +91,14 @@ class _BottomSheetFormState extends State<BottomSheetForm> {
 
   void shiftSelected(dynamic value) {
     setState(() {
-      print(value);
       selectedShift = value;
       widget.notifyEquipmentTypeChange(value['id']);
+    });
+  }
+
+  void workSelected(dynamic value) {
+    setState(() {
+      selectedWork = value;
     });
   }
 
@@ -104,6 +120,31 @@ class _BottomSheetFormState extends State<BottomSheetForm> {
               context: context,
               selectedItem: selectedShift,
               itemList: widget.shiftList
+                  .map((e) => {'description': e.description, 'id': e.id})
+                  .toList(),
+            ),
+          );
+        });
+  }
+
+  buildWorkSelector(context) {
+    showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.grey[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
+        builder: (BuildContext bc) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
+            child: ListSelector(
+              notifyParent: workSelected,
+              context: context,
+              selectedItem: selectedWork,
+              itemList: widget.workList
                   .map((e) => {'description': e.description, 'id': e.id})
                   .toList(),
             ),
@@ -200,7 +241,12 @@ class _BottomSheetFormState extends State<BottomSheetForm> {
               _startDate,
               _endDate,
               selectedShift['id'],
-              selectedProject['id'])
+              selectedProject['id'],
+              widget.owner,
+              selectedWork['id'],
+              tripsController.text,
+              tripFrom.text,
+              tripTo.text)
           .then((value) => {
                 Navigator.pop(context),
                 widget.notifySavedRequest(),
@@ -212,111 +258,171 @@ class _BottomSheetFormState extends State<BottomSheetForm> {
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
-      heightFactor: 0.9,
+      heightFactor: 0.94,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: GLOBAL_PADDING),
         child: Padding(
           padding: const EdgeInsets.only(top: GLOBAL_PADDING),
-          child: Container(
-            height: 2000.0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: GLOBAL_PADDING),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CustomTextLabel(lable: 'Noza Purchase Reference Number'),
-                      CustomTextField(
-                        valueController: nozaPRNumberController,
-                        iconData: Icons.file_copy,
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      ElevatedButton(
-                          style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  SECONDARY_COLOR)),
-                          onPressed: () =>
-                              {buildEquipmentTypeSelector(context)},
-                          child: selectedEquipmentType['description'].isNotEmpty
-                              ? Text(selectedEquipmentType['description'])
-                              : Text('Select type of equipment')),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      CustomTextLabel(lable: 'Quantity'),
-                      CustomTextField(
-                        valueController: quantityController,
-                        iconData: Icons.production_quantity_limits,
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      ElevatedButton(
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                                SECONDARY_COLOR)),
-                        onPressed: () => {buildProjectSelector(context)},
-                        child: selectedProject['description'].isNotEmpty
-                            ? Text(selectedProject['description'])
-                            : Text('Select project'),
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      ElevatedButton(
-                          style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  SECONDARY_COLOR)),
-                          onPressed: () => {buildShiftSelector(context)},
-                          child: selectedShift['description'].isNotEmpty
-                              ? Text(selectedShift['description'])
-                              : Text('Select shift')),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      CustomTextLabel(lable: 'Dispatch date'),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  showDateRange = !showDateRange;
-                                });
-                              },
-                              icon: Icon(Icons.calendar_month_rounded,
-                                  color: Colors.blue),
-                            ),
-                            Text(_range),
-                          ],
-                        ),
-                      ),
-                      buildDateRange(showDateRange, _onSelectionChanged),
-                    ],
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: 1,
-                  child: ElevatedButton(
-                      onPressed: () => {submitRequest(context)},
-                      child: submitting
-                          ? SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.0,
-                                color: COLOR_WHITE,
+          child: SizedBox(
+            height: 2500.0,
+            child: SingleChildScrollView(
+              child: Form(
+                key: requestFormKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          top: GLOBAL_PADDING, bottom: 20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomTextLabel(
+                              lable: 'Noza Purchase Reference Number'),
+                          CustomTextField(
+                            valueController: nozaPRNumberController,
+                            iconData: Icons.file_copy,
+                            inputType: TextInputType.text,
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          SECONDARY_COLOR)),
+                              onPressed: () =>
+                                  {buildEquipmentTypeSelector(context)},
+                              child: selectedEquipmentType['description']
+                                      .isNotEmpty
+                                  ? Text(selectedEquipmentType['description'])
+                                  : Text('Select type of equipment')),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          CustomTextLabel(lable: 'Quantity'),
+                          CustomTextField(
+                            valueController: quantityController,
+                            iconData: Icons.production_quantity_limits,
+                            inputType: TextInputType.number,
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                        SECONDARY_COLOR)),
+                            onPressed: () => {buildWorkSelector(context)},
+                            child: selectedWork['description'].isNotEmpty
+                                ? Text(selectedWork['description'])
+                                : Text('Select work to be done'),
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          CustomTextLabel(lable: 'Trips to be made'),
+                          CustomTextField(
+                            valueController: tripsController,
+                            iconData: Icons.production_quantity_limits,
+                            inputType: TextInputType.number,
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          CustomTextLabel(lable: 'From'),
+                          CustomTextField(
+                            valueController: tripFrom,
+                            iconData: Icons.location_city_rounded,
+                            inputType: TextInputType.text,
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          CustomTextLabel(lable: 'To'),
+                          CustomTextField(
+                            valueController: tripTo,
+                            iconData: Icons.location_city_rounded,
+                            inputType: TextInputType.text,
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ElevatedButton(
+                                style: ButtonStyle(
+                                    backgroundColor:
+                                        MaterialStateProperty.all<Color>(
+                                            SECONDARY_COLOR)),
+                                onPressed: () =>
+                                    {buildProjectSelector(context)},
+                                child: selectedProject['description'].isNotEmpty
+                                    ? Text(selectedProject['description'])
+                                    : Text('Select project'),
                               ),
-                            )
-                          : Text('Send request')),
+                              ElevatedButton(
+                                  style: ButtonStyle(
+                                      backgroundColor:
+                                          MaterialStateProperty.all<Color>(
+                                              SECONDARY_COLOR)),
+                                  onPressed: () =>
+                                      {buildShiftSelector(context)},
+                                  child: selectedShift['description'].isNotEmpty
+                                      ? Text(selectedShift['description'])
+                                      : Text('Select shift')),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          CustomTextLabel(lable: 'Dispatch date'),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 16.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      showDateRange = !showDateRange;
+                                    });
+                                  },
+                                  icon: Icon(Icons.calendar_month_rounded,
+                                      color: Colors.blue),
+                                ),
+                                Text(_range),
+                              ],
+                            ),
+                          ),
+                          buildDateRange(showDateRange, _onSelectionChanged),
+                        ],
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: 1,
+                      child: ElevatedButton(
+                          onPressed: () => {
+                                if (requestFormKey.currentState!.validate())
+                                  {submitRequest(context)},
+                              },
+                          child: submitting
+                              ? SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.0,
+                                    color: COLOR_WHITE,
+                                  ),
+                                )
+                              : Text('Send request')),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -409,6 +409,7 @@ class WorkData {
   final String jobId;
   final String status;
   final String targetTrips;
+  final tripsDone;
   final double startIndex;
   final double millage;
   final Project prj;
@@ -418,12 +419,14 @@ class WorkData {
   final bool siteWork;
   final String dispatchDate;
   final String shift;
+  final duration;
 
   const WorkData(
       {required this.workDone,
       required this.jobId,
       required this.status,
       required this.targetTrips,
+      required this.tripsDone,
       required this.startIndex,
       required this.millage,
       required this.prj,
@@ -432,13 +435,15 @@ class WorkData {
       required this.equipment,
       required this.siteWork,
       required this.dispatchDate,
-      required this.shift});
+      required this.shift,
+      required this.duration});
 
   static WorkData fromJson(Map<String, dynamic> json) => WorkData(
       workDone: WorkDone.fromJson(json['workDone']),
       jobId: json['_id'],
       status: json['status'],
       targetTrips: json['targetTrips'],
+      tripsDone: json['tripsDone'],
       startIndex: double.parse(json['startIndex']),
       millage: double.parse(json['millage']),
       prj: Project.fromJson(
@@ -452,7 +457,8 @@ class WorkData {
       dispatchDate: DateFormat('d.MM.y')
           .format(DateTime.parse(json['dispatchDate']).toLocal())
           .toString(),
-      shift: json['shift']
+      shift: json['shift'],
+      duration: json['duration']
       // driver: User?.fromJson(json['driver']),
       );
 }

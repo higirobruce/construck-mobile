@@ -16,9 +16,6 @@ class EquipmentTypesApi {
 
     if (response.statusCode == 200) {
       final List equipmentTypes = json.decode(response.body);
-
-      print(response.body.toString());
-
       return equipmentTypes
           .map((json) => EquipmentType.fromJson(json))
           .toList();
