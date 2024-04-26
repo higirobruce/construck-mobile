@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_const, prefer_const_constructors, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers
+// ignore_for_file: unnecessary_const, prefer_const_constructors, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers, curly_braces_in_flow_control_structures, unnecessary_new
 
 import 'dart:math';
 
@@ -208,10 +208,10 @@ class _MainScreenState extends State<MainScreen> {
         _range = '${DateFormat('dd-MMM-yyyy').format(args.value.startDate)} -'
             // ignore: lines_longer_than_80_chars
             ' ${DateFormat('dd-MMM-yyyy').format(args.value.endDate ?? args.value.startDate)}';
-        _startDate = '${DateFormat('yyyy-MM-dd').format(args.value.startDate)}';
+        _startDate = DateFormat('yyyy-MM-dd').format(args.value.startDate);
 
         _endDate =
-            '${DateFormat('yyyy-MM-dd').format(args.value.endDate ?? args.value.startDate)}';
+            DateFormat('yyyy-MM-dd').format(args.value.endDate ?? args.value.startDate);
 
         if (args.value.endDate != null) {
           loadDashboardData();
@@ -785,7 +785,7 @@ class _MainScreenState extends State<MainScreen> {
                     height: 15,
                     width: 15,
                     child: CircularProgressIndicator(
-                      color: Theme.of(context).accentColor,
+                      color: Theme.of(context).colorScheme.secondary,
                       strokeWidth: 1.5,
                     ),
                   ),

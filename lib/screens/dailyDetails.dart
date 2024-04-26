@@ -93,7 +93,7 @@ class _DailyDetailsState extends State<DailyDetails> {
                   height: 15,
                   width: 15,
                   child: CircularProgressIndicator(
-                    color: Theme.of(context).accentColor,
+                    color: Theme.of(context).colorScheme.secondary,
                     strokeWidth: 1.5,
                   ),
                 ),

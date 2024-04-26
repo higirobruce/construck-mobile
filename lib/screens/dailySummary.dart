@@ -107,7 +107,7 @@ class _DailySummaryState extends State<DailySummary> {
                   height: 15,
                   width: 15,
                   child: CircularProgressIndicator(
-                    color: Theme.of(context).accentColor,
+                    color: Theme.of(context).colorScheme.secondary,
                     strokeWidth: 1.5,
                   ),
                 ),
@@ -219,7 +219,7 @@ class DailySummaryTile extends StatelessWidget {
               //             'Reject',
               //             style: TextStyle(
               //                 fontSize: 12,
-              //                 color: Theme.of(context).accentColor),
+              //                 color: Theme.of(context).colorScheme.secondary),
               //           ),
               //         ),
               //       )

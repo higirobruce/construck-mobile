@@ -18,7 +18,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Construck app',
       debugShowCheckedModeBanner: false,
-      theme: lightTheme,
+      theme: lightTheme.copyWith(
+        colorScheme: lightTheme.colorScheme.copyWith(secondary: COLOR_ACCENT),
+      ),
       home: const MyHomePage(title: 'Shabika App'),
     );
   }

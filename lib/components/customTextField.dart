@@ -35,7 +35,7 @@ class CustomTextField extends StatelessWidget {
             suffixIcon: Icon(
               iconData,
               size: 18,
-              // color: Theme.of(context).accentColor,
+              // color: Theme.of(context).colorScheme.secondary,
             ),
           ),
           controller: valueController,

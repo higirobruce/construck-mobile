@@ -6,12 +6,12 @@ import 'package:mobile2/api/equipmentTypes.dart';
 
 class RequestsApi {
   static Future<List<EquipmentRequest>> getRequestsSuggestions() async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/projects');
+    // final url = Uri.parse('http://localhost:9000/projects');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/requests/');
+        'http://localhost:9000/requests/');
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
 
@@ -26,12 +26,12 @@ class RequestsApi {
   }
 
   static Future<List<EquipmentRequest>> getMyRequests(String? owner) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/projects');
+    // final url = Uri.parse('http://localhost:9000/projects');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/requests/byOwner/' +
+        'http://localhost:9000/requests/byOwner/' +
             owner!);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -46,12 +46,12 @@ class RequestsApi {
 
   static Future<List<RequestSummary>> getAggregatedRequests(
       String status) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/projects');
+    // final url = Uri.parse('http://localhost:9000/projects');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/requests/aggregated/' +
+        'http://localhost:9000/requests/aggregated/' +
             status);
     final response =
         await http.get(url, headers: {"Authorization": 'Basic ' + encoded});
@@ -78,12 +78,12 @@ class RequestsApi {
       String tripsToBeMade,
       String tripFrom,
       String tripTo) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/projects');
+    // final url = Uri.parse('http://localhost:9000/projects');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/requests/');
+        'http://localhost:9000/requests/');
     final response = await http.post(url, headers: {
       "Authorization": 'Basic ' + encoded
     }, body: {
@@ -109,12 +109,12 @@ class RequestsApi {
   }
 
   static Future assignQuantity(String eqId, String quantity) async {
-    // final url = Uri.parse('https://construck-backend-playgroud.herokuapp.com/projects');
+    // final url = Uri.parse('http://localhost:9000/projects');
     String credentials = "sh4b1k4:@9T4Tr73%62l!iHqdhWv";
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
     String encoded = stringToBase64.encode(credentials);
     final url = Uri.parse(
-        'https://construck-backend-playgroud.herokuapp.com/requests/assignQuantity/' +
+        'http://localhost:9000/requests/assignQuantity/' +
             eqId);
     final response = await http.put(url, headers: {
       "Authorization": 'Basic ' + encoded

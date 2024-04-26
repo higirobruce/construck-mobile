@@ -219,7 +219,7 @@ class _MonthlyTileState extends State<MonthlyTile> {
                                     height: 10,
                                     width: 10,
                                     child: CircularProgressIndicator(
-                                      color: Theme.of(context).accentColor,
+                                      color: Theme.of(context).colorScheme.secondary,
                                       strokeWidth: 1.5,
                                     ),
                                   ),
@@ -268,7 +268,7 @@ class _MonthlyTileState extends State<MonthlyTile> {
                                     height: 10,
                                     width: 10,
                                     child: CircularProgressIndicator(
-                                      color: Theme.of(context).accentColor,
+                                      color: Theme.of(context).colorScheme.secondary,
                                       strokeWidth: 1.5,
                                     ),
                                   ),
@@ -295,7 +295,7 @@ class _MonthlyTileState extends State<MonthlyTile> {
                                     'Reject',
                                     style: TextStyle(
                                         fontSize: 12,
-                                        color: Theme.of(context).accentColor),
+                                        color: Theme.of(context).colorScheme.secondary),
                                   ),
                                 ),
                               )

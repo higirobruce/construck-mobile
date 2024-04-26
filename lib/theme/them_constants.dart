@@ -15,7 +15,6 @@ ThemeData lightTheme = ThemeData(
       selectedItemColor: COLOR_ACCENT,
       backgroundColor: Colors.grey[100],
       elevation: 0.0),
-  accentColor: COLOR_ACCENT,
   fontFamily: 'Nunito',
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(

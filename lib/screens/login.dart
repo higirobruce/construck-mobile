@@ -58,29 +58,29 @@ class _LoginState extends State<Login> {
     List<dynamic>? _savedAssignedProjects1 =
         jsonDecode(_savedAssignedProjectsStr!);
 
-    if (_savedId != null &&
-        _savedUsername != null &&
-        _savedUserId != null &&
-        _savedId.isNotEmpty &&
-        _savedUserType != null &&
-        _savedUsername.isNotEmpty &&
-        _savedInitials != null &&
-        _savedInitials.isNotEmpty &&
-        _savedAssignedProjects1 != null &&
-        _savedAssignedProjects1.isNotEmpty) {
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MainScreen(
-                _savedId,
-                _savedUsername,
-                _savedUserId,
-                _savedUserType,
-                _savedInitials,
-                _savedAssignedProjects1),
-          ),
-          (Route<dynamic> route) => route is Success);
-    }
+    // if (_savedId != null &&
+    //     _savedUsername != null &&
+    //     _savedUserId != null &&
+    //     _savedId.isNotEmpty &&
+    //     _savedUserType != null &&
+    //     _savedUsername.isNotEmpty &&
+    //     _savedInitials != null &&
+    //     _savedInitials.isNotEmpty &&
+    //     _savedAssignedProjects1 != null &&
+    //     _savedAssignedProjects1.isNotEmpty) {
+    //   Navigator.pushAndRemoveUntil(
+    //       context,
+    //       MaterialPageRoute(
+    //         builder: (context) => MainScreen(
+    //             _savedId,
+    //             _savedUsername,
+    //             _savedUserId,
+    //             _savedUserType,
+    //             _savedInitials,
+    //             _savedAssignedProjects1),
+    //       ),
+    //       (Route<dynamic> route) => route is Success);
+    // }
   }
 
   login(context, username, password) async {
@@ -185,7 +185,7 @@ class _LoginState extends State<Login> {
                           height: 15,
                           width: 15,
                           child: CircularProgressIndicator(
-                            color: Theme.of(context).accentColor,
+                            color: Theme.of(context).colorScheme.secondary,
                             strokeWidth: 1.5,
                           ),
                         ),
@@ -248,7 +248,7 @@ class CustomInputField extends StatelessWidget {
             suffixIcon: Icon(
               Icons.phone,
               size: 18,
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
           controller: valueController,
